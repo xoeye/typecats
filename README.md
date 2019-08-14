@@ -208,3 +208,10 @@ is therefore currently only compatible with Python 3.6 and up.
 
 As core parts of the implementation, both `attrs` and `cattrs` are
 runtime dependencies.
+
+
+## Users/Stability
+
+`typecats` has been used in production in the Vision system at XOi
+Technologies for over 6 months, with no significant changes or bugs
+found in the past 3 months.
