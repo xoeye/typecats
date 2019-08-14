@@ -46,6 +46,10 @@ features. The 3 core features are:
    structuring and unstructuring pure data objects, and require fewer
    imports - just import your defined type and go!
 
+   Note that a `mypy` plugin is provided to inform the type checker
+   that these dynamically-added methods are real and provide the
+   intended result types.
+
 2. Non-empty validators defined for all attributes with no default
    provided.
 
@@ -58,7 +62,7 @@ features. The 3 core features are:
 	   owner: Optional[Owner] = None
 
    works = TestCat.struc(dict(name='Tom', age=0))
-   works.neutered == True
+   assert works.neutered == True
 
    try:
 	   TestCat.struc(dict(name='', age=0))
@@ -77,20 +81,24 @@ features. The 3 core features are:
    context of structuring data from APIs, where the API contract may
    not require all keys to be provided for a given type, and where new
    attributes/keys may be defined later on that old clients would not
-   know about (backwards compatibility).
+   know about (backwards compatibility). In these cases, not defining
+   a default value would complicate the code, by forcing developers to
+   remember which keys needed to be added to a raw data `dict` before
+   structuring it.
 
    On the other hand, there are some facets of the data that are
    absolutely required. A common example would be a database ID -
    without a defined ID, the object/data is meaningless. `typecats`
    allows you to enforce the most basic level of compliance by not
    defining defaults, which forces clients to provide not simply a
-   value of the proper type, but a non-empty value of that type - the
-   empty string would never be a valid database ID.
+   value of the proper type, but a non-empty value of that type - for
+   instance, the empty string would never be a valid database ID.
 
 3. Objects may subclass `dict` in order to transparently retain
-   untyped keys for a roundtrip structure-unstructure. These are
-   called `Wildcats`, since they allow a significant amount of extra
-   functionality at the cost of not fully enforcing type-checking.
+   untyped key/value pairs for a roundtrip
+   structure-unstructure. These are called `Wildcats`, since they
+   allow a significant amount of extra functionality at the cost of
+   not fully enforcing type-checking.
 
    ```
    @Cat
