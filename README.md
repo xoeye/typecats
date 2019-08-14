@@ -1,5 +1,6 @@
 # typecats
-Structure unstructured data for the purpose of static type checking
+Structure unstructured data for the purpose of static type
+checking. An opinionated wrapper for `attrs` and `cattrs`.
 
 In many web services it is common to consume or generate JSON or some
 JSON-like representation of data. JSON translates quite nicely to core
@@ -24,7 +25,7 @@ top of these two runtime libraries (`attrs` and `cattrs`) and the
 develop-time `mypy`. It defines an `attrs` class with a few additional
 features. The 3 core features are:
 
-### Features
+## Features
 
 1. Static class `struc` function and object `unstruc` method added to
    every class type defined as a Cat.
@@ -157,7 +158,7 @@ features. The 3 core features are:
    inaccessible as a Wildcat.
 
 
-### Notes on intent, compatibility, and dependencies
+## Notes on intent, compatibility, and dependencies
 
 `typecats` and `Cat` are explictly intended to solve a *few* specific
 but common uses, and though they do not intentionally override or
