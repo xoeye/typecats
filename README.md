@@ -49,7 +49,11 @@ features. The 3 core features are:
 
    Note that a `mypy` plugin is provided to inform the type checker
    that these dynamically-added methods are real and provide the
-   intended result types.
+   intended result types. Add to your `mypy.ini`:
+
+   ```
+   plugins = typecats.cats_mypy_plugin
+   ```
 
 2. Non-empty validators defined for all attributes with no default
    provided.
