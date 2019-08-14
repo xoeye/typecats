@@ -123,22 +123,26 @@ features. The 3 core features are:
 
    In other static type-checking systems such as Flow for JavaScript,
    you may define a type as being a simple overlay on top of an object
-   which does not prevent that object from containing other data. A
-   `Cat` is an `attrs` class with a defined set of attributes that
-   will be structured from raw data, and as of `cattrs` 1.0.0rc0,
-   unexpected keys are silently dropped in order to prevent users from
-   needing to sanitize their data before structuring. This means that
-   a structured object is not suitable for being passed between
-   different parts of a program if there may be other parts to the
-   data that the structuring class does not know about. Since many
-   structuring/unstructuring trips can be prohibitively expensive, and
-   additionally it is arguably (e.g., the design philosophy behind
-   Clojure's Maps, or simply duck/structural typing in general) better
-   software design to allow code to operate on a limited subset of
-   attributes without preventing objects with a superset of their
-   functionality to be used, `typecats` provides the `Wildcat`
-   functionality to mimic these more expressive and flexible type/data
-   systems.
+   which does not prevent that object from containing other data for
+   keys outside the typed set. A `Cat` is an `attrs` class with a
+   defined set of attributes that will be structured from raw data,
+   and as of `cattrs` 1.0.0rc0, unexpected keys are silently dropped
+   in order to prevent users from needing to sanitize their data
+   before structuring (as opposed to being a runtime error). This
+   behavior means that a structured object is not suitable for being
+   passed between different parts of a program if there may be other
+   parts to the data that the structuring class does not know
+   about. This is an unfortunately common requirement, for instance
+   when operating a roundtrip read/write transaction to/from a
+   database. Since the alternative of passing around the raw data and
+   performing many separate structuring/unstructuring roundtrips can
+   be prohibitively expensive, and additionally it is arguably (e.g.,
+   the design philosophy behind Clojure's Maps, or simply
+   duck/structural typing in general) better software design in many
+   cases to allow code to operate on a limited subset of attributes
+   without preventing objects with a superset of their functionality
+   to be used, `typecats` provides the `Wildcat` functionality to
+   mimic these more expressive and flexible type/data systems.
 
    Note that, as with the rest of `typecats`, this is a local optimum
    designed for specific though arguably common usecases. You don't
