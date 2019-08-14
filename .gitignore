@@ -24,6 +24,11 @@ wheels/
 .installed.cfg
 *.egg
 MANIFEST
+pip-wheel-metadata
+
+Pipfile.lock
+pyproject.toml
+poetry.lock
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

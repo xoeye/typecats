@@ -1,0 +1,45 @@
+{
+  "dynamicClaimsKeys": ["hasVSCs"],
+  "createdAt": "2019-01-11T14:19:28.380950Z",
+  "dynamicMetadata": {
+    "hasVSCs": true,
+    "randomString": "Peter was here"
+  },
+  "addressLine1": "322 Madison Street",
+  "website": "https://xoi.io",
+  "dynamic": {
+    "inner": "type"
+  },
+  "deletedBy": "",
+  "primaryContact": "",
+  "id": "XOi",
+  "deletedAt": null,
+  "createdBy": "pgaultney@xoi.io",
+  "knowledgebase_groups": [],
+  "virtual_service_centers": [
+    {
+      "url": "https://yeah.com",
+      "name": "Peter's first VSC"
+    },
+    {
+      "name": "Peter's second VSC",
+      "url": "https://NO.com"
+    }
+  ],
+  "logoUrl": "",
+  "stateOrRegion": "TN",
+  "postalCode": "37208",
+  "name": "XOi",
+  "addressLine2": "Suite 202",
+  "theme": {
+    "primaryColor": "green",
+    "secondaryColor": "#f9aea3"
+  },
+  "description": "XOi organization, bootstrapped by bootstrap_superuser.py",
+  "userClaims": {
+    "hasVSCs": true
+  },
+  "country": "US",
+  "phoneNumber": "",
+  "city": "Nashville"
+}

@@ -1,0 +1,20 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+mypy = "*"
+pytest = "*"
+pylint = "*"
+
+[packages]
+cattrs = "==1.0.0rc0"
+attrs = "~=19.1.0"
+typecats = {path = ".",editable = true}
+
+[requires]
+python_version = "3.7"
+
+[pipenv]
+allow_prereleases = true
