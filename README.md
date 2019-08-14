@@ -27,8 +27,10 @@ features. The 3 core features are:
 
 ## Features
 
-1. Static class `struc` function and object `unstruc` method added to
-   every class type defined as a Cat.
+1. Static class function `struc` and object method `unstruc` added to
+   every class type defined as a Cat, which pass directly through to
+   their underlying `structure` and `unstructure` implementations in
+   `cattrs`.
 
    ```
    @Cat
@@ -44,8 +46,12 @@ features. The 3 core features are:
    Rationale:
 
    Make your code easier to read, create a common pattern for
-   structuring and unstructuring pure data objects, and require fewer
-   imports - just import your defined type and go!
+   defining, structuring, and unstructuring pure data objects, and
+   require fewer imports - just import your defined type and go!
+   Abbreviated forms of the verbs `structure` and `unstructure` were
+   chosen to underscore the difference between the built-in `cattrs`
+   verbs and to reduce code clutter slightly for what is intended to
+   be a common and idiomatic operation.
 
    Note that a `mypy` plugin is provided to inform the type checker
    that these dynamically-added methods are real and provide the
@@ -53,6 +59,16 @@ features. The 3 core features are:
 
    ```
    plugins = typecats.cats_mypy_plugin
+   ```
+
+   Additionally, `struc` and `unstruc` first-class functions are
+   provided if you strongly prefer a functional approach. They reverse
+   the order of the `cattrs` implementations to make them suitable for
+   the common case of partial application:
+
+   ```
+   TestCat_struc = functools.partial(TestCat)
+   TestCat_struc(dict(name='Tom', age=2))
    ```
 
 2. Non-empty validators defined for all attributes with no default
@@ -183,6 +199,9 @@ internal `cattrs` `Converter` instance. By defining its own converter
 instance, `typecats` does not interfere in any way with an existing
 application's usage of `attrs` or `cattrs`, and may be used in
 addition to, rather than as a replacement for, those libraries.
+
+Use `register_struc_hook` and `register_unstruc_hook` to register on
+the built-in converter instance.
 
 `typecats` uses newer-style static typing within its own codebase, and
 is therefore currently only compatible with Python 3.6 and up.
