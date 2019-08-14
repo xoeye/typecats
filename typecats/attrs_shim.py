@@ -114,7 +114,7 @@ def nonempty_validator(self, attribute, value):
             raise ValueError(
                 f'Attribute "{attribute.name}" on class {type(self)} '
                 f"with type {attribute.type} "
-                "cannot have an empty/false-y value!"
+                f"cannot have empty value '{value}'!"
             )
 
 
