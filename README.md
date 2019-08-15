@@ -62,12 +62,12 @@ features. The 3 core features are:
    ```
 
    Additionally, `struc` and `unstruc` first-class functions are
-   provided if you strongly prefer a functional approach. They reverse
-   the order of the `cattrs` implementations to make them suitable for
-   the common case of partial application:
+   provided if you strongly prefer a functional approach. `struc`
+   reverses the order of the `cattrs` function signature to make it
+   suitable for the common case of partial application:
 
    ```
-   TestCat_struc = functools.partial(TestCat)
+   TestCat_struc = functools.partial(struc, TestCat)
    TestCat_struc(dict(name='Tom', age=2))
    ```
 

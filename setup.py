@@ -11,6 +11,7 @@ setup(
     version=about["__version__"],
     author=about["__author__"],
     author_email=about["__author_email__"],
+    url="https://github.com/xoeye/typecats",
     description="Structure unstructured data for the purpose of static type checking",
     packages=find_packages(),
     package_data={"": ["py.typed"]},
