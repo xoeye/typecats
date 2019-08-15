@@ -15,7 +15,7 @@ class CatTest:
     alive: bool = True
 
 
-def test_cats_decorator():
+def test_cats_decorator() -> None:
 
     with pytest.raises(TypeError):
         # missing neutered
@@ -56,7 +56,7 @@ class Task:
     completed_at: ty.Optional[datetime] = None
 
 
-def test_nested_with_structurer():
+def test_nested_with_structurer() -> None:
 
     register_struc_hook(
         datetime, lambda s, _t: datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%fZ")

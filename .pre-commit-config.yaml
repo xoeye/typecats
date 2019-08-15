@@ -33,7 +33,14 @@ repos:
           - --limit=8.5
           - --rcfile=./.pylintrc
 
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.720
+  - repo: local
     hooks:
-      - id: mypy
+      - id: mypy-env
+        name: mypy-env
+        entry: ./env_runner.py mypy
+        language: system
+        types: [python]
+        args:
+          - --show-traceback
+          - --ignore-missing-imports
+          - --check-untyped-defs
