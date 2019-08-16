@@ -27,7 +27,8 @@ features. The 3 core features are:
 
 ## Features
 
-1. Static class function `struc` and object method `unstruc` added to
+1. ### Built-in `struc` and `unstruc`.
+   Static class function `struc` and object method `unstruc` added to
    every class type defined as a Cat, which pass directly through to
    their underlying `structure` and `unstructure` implementations in
    `cattrs`.
@@ -43,7 +44,7 @@ features. The 3 core features are:
    TestCat.struc(dict(name='Tom', age=9)).unstruc() == dict(name='Tom', age=9)
    ```
 
-   Rationale:
+   #### Rationale
 
    Make your code easier to read, create a common pattern for
    defining, structuring, and unstructuring pure data objects, and
@@ -52,6 +53,8 @@ features. The 3 core features are:
    chosen to underscore the difference between the built-in `cattrs`
    verbs and to reduce code clutter slightly for what is intended to
    be a common and idiomatic operation.
+
+   #### Considerations
 
    Note that a `mypy` plugin is provided to inform the type checker
    that these dynamically-added methods are real and provide the
@@ -71,8 +74,7 @@ features. The 3 core features are:
    TestCat_struc(dict(name='Tom', age=2))
    ```
 
-2. Non-empty validators defined for all attributes with no default
-   provided.
+2. ### Non-empty validators defined for all attributes with no default provided.
 
    ```
    @Cat
@@ -92,7 +94,7 @@ features. The 3 core features are:
 	   # Attribute "name" on class <class 'TestCat'> with type <class 'str'> cannot have empty value ''!
    ```
 
-   Rationale:
+   #### Rationale
 
    For many types of data, a default value such as an empty string,
    empty list/set, or missing complex type is perfectly valid, and
@@ -115,7 +117,9 @@ features. The 3 core features are:
    value of the proper type, but a non-empty value of that type - for
    instance, the empty string would never be a valid database ID.
 
-3. Objects may subclass `dict` in order to transparently retain
+3. ### Wildcats - partial/gradual types via classes.
+
+   Objects may subclass `dict` in order to transparently retain
    untyped key/value pairs for a roundtrip
    structure-unstructure. These are called `Wildcats`, since they
    allow a significant amount of extra functionality at the cost of
@@ -131,11 +135,15 @@ features. The 3 core features are:
    wc = TestWildcat.struc(cat_from_db)
    assert wc.name == Tom
    assert wc.age == 8
-   assert wc['gps_tracker'] == True
+   assert wc['gps_tracker'] == True  # cattrs would normally drop this key at structure time
    assert wc.unstruc() == cat_from_db  # `gps_tracker` survived the roundtrip
    ```
 
-   Rationale:
+   #### Rationale
+
+   Effectively provides a partially-typed overlay on top of existing
+   data, as gradual/partial typing within a specific data format can
+   be very useful.
 
    In other static type-checking systems such as Flow for JavaScript,
    you may define a type as being a simple overlay on top of an object
@@ -157,18 +165,28 @@ features. The 3 core features are:
    duck/structural typing in general) better software design in many
    cases to allow code to operate on a limited subset of attributes
    without preventing objects with a superset of their functionality
-   to be used, `typecats` provides the `Wildcat` functionality to
+   from being used, `typecats` provides the `Wildcat` functionality to
    mimic these more expressive and flexible type/data systems.
 
+   #### Considerations
+
    Note that, as with the rest of `typecats`, this is a local optimum
-   designed for specific though arguably common usecases. You don't
+   designed for specific, though arguably common, usecases. You don't
    need to use the Wildcat functionality to take advantage of features
-   1 and 2, and since it is presumably quite rare to explicity
-   subclass `dict` for normal Python classes, it seems unlikely that
-   this implementation choice to require inheritance would prevent
-   most practical use cases of `Cat` even if the functionality of
-   preserving unknown data was specifically not desirable for a given
-   application.
+   1 and 2, and since it is presumably (for good reason) quite rare to
+   explicity subclass `dict` for normal Python classes, it seems
+   unlikely that this implementation choice to require inheritance
+   would prevent most practical use cases of `Cat` even if the
+   functionality of preserving unknown data was specifically not
+   desirable for a given application.
+
+   If an application attempts to get or set items within a Wildcat
+   which are defined attributes on the class, this will (as of v1.1)
+   be allowed but a warning will be logged. This seems to be a better
+   in-practice balance for evolving codebases than the v1.0 behavior of
+   raising an error. A future version could potentially allow this to
+   be toggled globally or per Wildcat class, but the default will
+   remain permissive for backwards compatiblity.
 
    A further design note on Wildcats: A non-inheriting implementation
    was considered and rejected (so far) for two reasons: first, that
