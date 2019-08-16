@@ -12,7 +12,7 @@ from .wildcat import (
     WC,
     MWC,
     mixin_wildcat_post_attrs_methods,
-    block_dangerous_dict_subclass_operations,
+    setup_warnings_for_dangerous_dict_subclass_operations,
 )
 
 
@@ -162,7 +162,7 @@ def Cat(maybe_cls=None, auto_attribs=True, disallow_empties=True, **kwargs):
     def make_cat(cls: ty.Type[C]) -> ty.Type[C]:
         is_wild = dict in cls.__mro__
         if is_wild:
-            block_dangerous_dict_subclass_operations(cls)
+            setup_warnings_for_dangerous_dict_subclass_operations(cls)
             register_struc_hook(cls, lambda obj, typ: struc_wildcat(typ, obj))
             register_unstruc_hook(cls, unstruc_wildcat)
 

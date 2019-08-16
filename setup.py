@@ -6,6 +6,9 @@ PKG_NAME = "typecats"
 about = {}  # type: ignore
 exec(open(f"{PKG_NAME}/__about__.py").read(), about)  # pylint: disable=exec-used
 
+with open("README.md") as fh:
+    long_description = fh.read()
+
 setup(
     name=PKG_NAME,
     version=about["__version__"],
@@ -13,6 +16,8 @@ setup(
     author_email=about["__author_email__"],
     url="https://github.com/xoeye/typecats",
     description="Structure unstructured data for the purpose of static type checking",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     packages=find_packages(),
     package_data={"": ["py.typed"]},
     python_requires=">=3.6",

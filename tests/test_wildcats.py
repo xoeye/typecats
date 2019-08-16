@@ -1,8 +1,6 @@
 import typing as ty
 import json
 
-import pytest
-
 from typecats import Cat
 
 from data_utils import ld
@@ -47,7 +45,7 @@ class KnowledgebaseMetadata(dict):
     make: str = ""
 
 
-def test_wildcat():
+def test_wildcats():
 
     dwc = dict(name="Steve", age=4, location="Colorado")
 
@@ -67,21 +65,19 @@ def test_wildcat():
     lwc = LocatedWildcat.struc(wc.unstruc())
     print("Located wildcat at " + lwc.location)
 
-    with pytest.raises(KeyError):
-        lwc["location"] = "Georgia"
-    assert "location" not in lwc
+    lwc["location"] = "Georgia"
+    assert lwc["location"] == "Georgia"
+    assert lwc.location == "Georgia"
 
     lwc["isDangerous"] = False
 
-    try:
-        lwc.update({"location": "Georgia"})
-    except KeyError as ke:
-        print(ke)
-    assert "location" not in lwc
+    lwc.update({"location": "Tennessee"})
+    assert lwc.location == "Tennessee"
+    assert lwc["location"] == "Tennessee"
 
     ndwc = lwc.unstruc()
     print(ndwc)
-    assert ndwc["location"] == "Colorado"
+    assert ndwc["location"] == "Tennessee"
     assert not ndwc["isDangerous"]
 
     xoi_dict = json.loads(open(ld("xoi.json")).read())
@@ -89,6 +85,7 @@ def test_wildcat():
     XOi = Organization.struc(xoi_dict)
     assert XOi
     XOi["dynamic"] = dict(inner="type")
+    assert XOi.userClaims
     XOi.userClaims.hasVSCs = True
     XOi.userClaims["somethingDynamic"] = 8888
     print(XOi)
