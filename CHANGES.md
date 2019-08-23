@@ -1,3 +1,9 @@
+### 1.1.1
+
+Typecats will now preserve user-provided `attrs` validators.
+
+The non-empty validator will still be run on attributes without defaults.
+
 ## 1.1.0
 
 No longer block `__setitem__`, `__getitem__`, and `update` for keys

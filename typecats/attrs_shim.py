@@ -5,8 +5,12 @@ Current attrs version supported is 19.1.0
 """
 # pylint: disable=redefined-builtin
 import typing as ty
+from decimal import Decimal
 
 from attr._make import NOTHING, _ClassBuilder
+
+
+_SCALAR_TYPES_WITH_NO_EMPTY_VALUES = (bool, float, int, Decimal)
 
 
 def cat_attrs(
@@ -104,10 +108,10 @@ def cat_attrs(
 
 
 def nonempty_validator(self, attribute, value):
-    """Don't allow strings and collections to have empty/False-y values."""
-    if attribute.type in (bool, int, float):
-        # doesn't make sense to 'validate' a boolean or int against False-ness
-        # since 0 or False are not 'empty values' for those types
+    """Don't allow strings and collections without attr defaults to have empty/False-y values."""
+    if attribute.type in _SCALAR_TYPES_WITH_NO_EMPTY_VALUES:
+        # doesn't make sense to 'validate' these types against emptiness
+        # since 0 or False are not 'empty' values
         return
     if attribute.default == NOTHING:
         if not value:
@@ -120,6 +124,15 @@ def nonempty_validator(self, attribute, value):
 
 def _hack_add_validator(attrib, validator):
     """Hacks into an attrs attribute to validate something."""
+    existing_validator = getattr(attrib, "validator")
+    if existing_validator and existing_validator != nonempty_validator:
+        input_validator = validator
+
+        def combine_validators(self, att, val):
+            existing_validator(self, att, val)
+            input_validator(self, att, val)
+
+        validator = combine_validators
     attrib._setattrs((("validator", validator),))
 
 
@@ -129,7 +142,7 @@ def _hook_builder_before_doing_anything(builder, disallow_empties=True):
     if not disallow_empties:
         return  # no hook to run other than this one
     for attrib in builder._attrs:
-        if attrib.type in (bool, int, float):
+        if attrib.type in _SCALAR_TYPES_WITH_NO_EMPTY_VALUES:
             continue
         # validate ALL attributes that don't have valid default values.
         if attrib.default == NOTHING:
