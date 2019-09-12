@@ -1,6 +1,8 @@
 import typing as ty
 import json
 
+import pytest
+
 from typecats import Cat
 
 from data_utils import ld
@@ -106,3 +108,55 @@ def test_wildcats():
     km = KnowledgebaseMetadata()
     km["other_thing"] = True
     assert bool(km)
+
+
+def test_attr_in_wildcat_dict_is_unstructured():
+    """Items inside the Wildcat dict should also be unstructured if they're unstructurable"""
+
+    @Cat
+    class MyWildcat(dict):
+        whatever: str = ""
+
+    @Cat
+    class Hidden:
+        number: int
+
+    mw = MyWildcat("blah")
+    mw["hidden"] = Hidden(3)
+
+    mwd = mw.unstruc()
+    assert mwd["hidden"]["number"] == 3  # 'hidden' is unstructured to dict
+    assert mwd["whatever"] == "blah"  # other stuff still works
+    with pytest.raises(AttributeError):
+        mwd["hidden"].number
+
+
+def test_nested_wildcats_still_unstructure():
+    """It's wildcats all the way down
+
+    Wildcats nested inside a Wildcat dict should be properly unstructured
+    as Wildcats, retaining all untyped keys but also unstructuring the typed ones.
+    """
+
+    @Cat
+    class MyWildcat(dict):
+        foo: str = "foo"
+
+    @Cat
+    class Hidden(dict):
+        bar: str = "bar"
+
+    @Cat
+    class NestedHidden:
+        reqd: int
+        wow: str = "UAU!!"
+
+    mw = MyWildcat()
+    mw["hidden"] = Hidden()
+    mw["hidden"]["nested_hidden"] = NestedHidden(8, "UAU!!!!!!")
+
+    mwd = mw.unstruc()
+    assert mwd["foo"] == "foo"
+    assert mwd["hidden"]["bar"] == "bar"
+    assert mwd["hidden"]["nested_hidden"]["reqd"] == 8
+    assert mwd["hidden"]["nested_hidden"]["wow"] == "UAU!!!!!!"

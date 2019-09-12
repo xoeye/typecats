@@ -55,7 +55,6 @@ class CatsPlugin(Plugin):
                 info = cls_def_ctx.cls.info
 
                 if STRUCTURE_NAME not in info.names:
-                    dict_type = cls_def_ctx.api.named_type("__builtins__.dict")
                     add_static_method(
                         cls_def_ctx,
                         STRUCTURE_NAME,
@@ -64,7 +63,6 @@ class CatsPlugin(Plugin):
                     )
                 if TRY_STRUCTURE_NAME not in info.names:
                     # print('adding ' + TRY_STRUCTURE_NAME + ' to ' + str(info.fullname()) )
-                    dict_type = cls_def_ctx.api.named_type("__builtins__.dict")
                     add_static_method(
                         cls_def_ctx,
                         TRY_STRUCTURE_NAME,
@@ -72,12 +70,7 @@ class CatsPlugin(Plugin):
                         fill_typevars(info),
                     )
                 if UNSTRUCTURE_NAME not in info.names:
-                    add_method(
-                        cls_def_ctx,
-                        UNSTRUCTURE_NAME,
-                        [],
-                        cls_def_ctx.api.named_type("__builtins__.dict"),
-                    )
+                    add_method(cls_def_ctx, UNSTRUCTURE_NAME, [], dict_type)
 
         if fullname == CAT_PATH:
             return add_struc_and_unstruc_to_classdefcontext

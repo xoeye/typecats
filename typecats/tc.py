@@ -80,7 +80,7 @@ def unstruc_wildcat(wildcat: WC) -> dict:
     # use our converter directly to avoid infinite recursion
     wildcat_dict = TYPECATS_CONVERTER.unstructure_attrs_asdict(wildcat)  # type: ignore
     wildcat_nonattrs_dict = {
-        key: wildcat[key] for key in wildcat if key not in wildcat_attrs_names
+        key: unstruc(wildcat[key]) for key in wildcat if key not in wildcat_attrs_names
     }
     # note that typed entries take absolute precedence over untyped in case of collisions.
     # these collisions should generally be prevented at runtime by the wildcat
@@ -204,8 +204,8 @@ def Cat(maybe_cls=None, auto_attribs=True, disallow_empties=True, **kwargs):
 
 def _log_structure_exception(exception: Exception, item: ty.Any, Type: type):
     type_name = getattr(Type, "__name__", str(Type))
-    logger.error(
-        f"Failed to structure {type_name}",
+    logger.info(
+        f"Failed to structure {type_name} from {item}",
         extra=dict(
             json=dict(item=item),
             traceback=traceback.format_exception(

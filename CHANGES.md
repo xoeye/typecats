@@ -1,3 +1,10 @@
+### 1.2.0
+
+Wildcats will now unstructure their 'wild' key/value pairs instead of
+passing them through.
+
+Improved structure exception logging.
+
 ### 1.1.1
 
 Typecats will now preserve user-provided `attrs` validators.
