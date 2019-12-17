@@ -227,9 +227,19 @@ is therefore currently only compatible with Python 3.6 and up.
 As core parts of the implementation, both `attrs` and `cattrs` are
 runtime dependencies.
 
+#### mypy plugin
+
+`typecats` provides a mypy plugin that tells mypy how to interpret the
+dynamically-generated `struc` and `unstruc` methods on `Cat`-annotated
+classes and objects.
+
+This plugin appears to have been broken by a backwards-incompatible
+change in mypy 0.750, so for now the recommendation is to continue
+using mypy 0.740. We intend to upgrade to a newer version of mypy as
+soon as reasonably possible, but at that time the plugin will itself
+not be compatible with older versions of mypy.
 
 ## Users/Stability
 
 `typecats` has been used in production in the Vision system at XOi
-Technologies for over 6 months, with no significant changes or bugs
-found in the past 3 months.
+Technologies since early 2019.
