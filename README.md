@@ -233,11 +233,8 @@ runtime dependencies.
 dynamically-generated `struc` and `unstruc` methods on `Cat`-annotated
 classes and objects.
 
-This plugin appears to have been broken by a backwards-incompatible
-change in mypy 0.750, so for now the recommendation is to continue
-using mypy 0.740. We intend to upgrade to a newer version of mypy as
-soon as reasonably possible, but at that time the plugin will itself
-not be compatible with older versions of mypy.
+This plugin was most recently updated to account for plugin API
+changes in mypy 0.750.
 
 ## Users/Stability
 

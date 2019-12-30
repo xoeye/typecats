@@ -24,11 +24,36 @@ CommonStructuringExceptions = (TypeError, AttributeError, ValueError)
 
 C = ty.TypeVar("C")
 
+StrucInput = ty.Mapping[str, ty.Any]
+UnstrucOutput = dict
+
+
+class TypeCat:
+    """This is mostly just an example of the interface - it is unused
+    within typecats itself.
+
+    You could use this base class to make PyLint happier with the Cat
+    decorator, which it doesn't understand. It's probably cleaner to
+    just tell Pylint not to worry about it, by ignoring generated
+    methods with these names.
+    """
+
+    @staticmethod
+    def struc(_d: StrucInput) -> ty.Any:
+        return TypeCat()  # this is a lie - don't worry about it
+
+    @staticmethod
+    def try_struc(_d: ty.Optional[StrucInput]) -> ty.Any:
+        return TypeCat()
+
+    def unstruc(self) -> UnstrucOutput:
+        return unstruc(self)
+
 
 TYPECATS_CONVERTER = cattr.Converter()
 
 
-def struc(cl: ty.Type[C], obj: ty.Any) -> C:
+def struc(cl: ty.Type[C], obj: StrucInput) -> C:
     """A wrapper for cattrs structure that logs and re-raises structure exceptions."""
     try:
         return TYPECATS_CONVERTER.structure(obj, cl)
@@ -37,7 +62,7 @@ def struc(cl: ty.Type[C], obj: ty.Any) -> C:
         raise e
 
 
-def unstruc(obj: ty.Any) -> ty.Any:
+def unstruc(obj: ty.Any) -> UnstrucOutput:
     """A wrapper for cattrs unstructure using the internal converter"""
     return TYPECATS_CONVERTER.unstructure(obj)
 
@@ -68,7 +93,7 @@ def struc_wildcat(Type: ty.Type[MWC], d: ty.Mapping) -> MWC:
         raise e
 
 
-def unstruc_wildcat(wildcat: WC) -> dict:
+def unstruc_wildcat(wildcat: WC) -> UnstrucOutput:
     """Unstructures a Wildcat by extracting the untyped key/value pairs,
 
     then updating that dict with the result of the typed attrs object unstructure.
@@ -90,11 +115,13 @@ def unstruc_wildcat(wildcat: WC) -> dict:
 
 
 def make_try_struc(
-    structure_method: ty.Callable[[ty.Type[C], ty.Any], C], cl: ty.Type[C], obj: ty.Any
+    structure_method: ty.Callable[[ty.Type[C], StrucInput], C],
+    cl: ty.Type[C],
+    obj: ty.Optional[StrucInput],
 ) -> ty.Optional[C]:
     """A wrapper for cattrs structure that suppresses and logs structure exceptions."""
     try:
-        return structure_method(cl, obj)
+        return structure_method(cl, obj)  # type: ignore
     except CommonStructuringExceptions:
         return None
     except Exception as e:
@@ -114,23 +141,6 @@ def register_struc_hook(*args, **kwargs):
 def register_unstruc_hook(*args, **kwargs):
     """Use this to register cattrs unstructuring hooks on the internal cattrs Converter"""
     TYPECATS_CONVERTER.register_unstructure_hook(*args, **kwargs)
-
-
-class TypeCat:
-    """You can use this base class to make PyLint happier
-    with the Cat decorator, which it doesn't understand.
-    """
-
-    @staticmethod
-    def struc(_d: ty.Mapping[str, ty.Any]) -> ty.Any:
-        return TypeCat()  # this is a lie - don't worry about it
-
-    @staticmethod
-    def try_struc(_d: ty.Optional[ty.Mapping[str, ty.Any]]) -> ty.Any:
-        return TypeCat()
-
-    def unstruc(self) -> ty.Dict[str, ty.Any]:
-        return unstruc(self)
 
 
 STRUCTURE_NAME = "struc"
@@ -176,18 +186,18 @@ def Cat(maybe_cls=None, auto_attribs=True, disallow_empties=True, **kwargs):
         cat_unstructure_method = unstruc_wildcat if is_wild else unstruc
 
         @staticmethod  # type: ignore
-        def struc_cat(d: ty.Mapping) -> C:
+        def struc_cat(d: StrucInput) -> C:
             return cat_structure_method(cls, d)
 
         setattr(cls, STRUCTURE_NAME, struc_cat)
 
         @staticmethod  # type: ignore
-        def try_struc_cat(d: ty.Mapping) -> ty.Optional[C]:
+        def try_struc_cat(d: ty.Optional[StrucInput]) -> ty.Optional[C]:
             return cat_try_struc(cls, d)
 
         setattr(cls, TRY_STRUCTURE_NAME, try_struc_cat)
 
-        def unstruc_to_dict(self) -> dict:
+        def unstruc_to_dict(self) -> UnstrucOutput:
             return cat_unstructure_method(self)
 
         setattr(cls, UNSTRUCTURE_NAME, unstruc_to_dict)
