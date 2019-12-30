@@ -14,8 +14,18 @@ from mypy.nodes import (
     MDEF,
     SymbolTable,
     TypeInfo,
+    FuncBase,
+    SymbolNode,
 )
-from mypy.types import NoneTyp, Type, CallableType, AnyType
+from mypy.types import (
+    NoneTyp,
+    Type,
+    CallableType,
+    AnyType,
+    TypeOfAny,
+    Instance,
+    UnionType,
+)
 from mypy.typevars import fill_typevars
 from mypy.semanal import set_callable_name
 from mypy.plugin import Plugin, ClassDefContext
@@ -29,9 +39,27 @@ TRY_STRUCTURE_NAME = "try_struc"
 UNSTRUCTURE_NAME = "unstruc"
 
 
+def fullname(x: ty.Union[FuncBase, SymbolNode]) -> str:
+    fn = x.fullname
+    if callable(fn):
+        return fn()
+    return fn
+
+
+def nameit(x: ty.Union[FuncBase, SymbolNode]) -> str:
+    fn = x.name
+    if callable(fn):
+        return fn()
+    return fn
+
+
 def plugin(_version: str):
     """Plugin for MyPy Typechecking of Cats"""
     return CatsPlugin
+
+
+def make_optional(typ: Type):
+    return UnionType.make_union([typ, NoneTyp()])
 
 
 class CatsPlugin(Plugin):
@@ -42,11 +70,20 @@ class CatsPlugin(Plugin):
     ) -> ty.Optional[ty.Callable[[ClassDefContext], None]]:
         """One of the MyPy Plugin defined entry points"""
 
-        def add_struc_and_unstruc_to_classdefcontext(cls_def_ctx):
+        def add_struc_and_unstruc_to_classdefcontext(cls_def_ctx: ClassDefContext):
             """This MyPy hook tells MyPy that struc and unstruc will be present on a Cat"""
 
             dict_type = cls_def_ctx.api.named_type("__builtins__.dict")
             str_type = cls_def_ctx.api.named_type("__builtins__.str")
+            api = cls_def_ctx.api
+            implicit_any = AnyType(TypeOfAny.special_form)
+            mapping = api.lookup_fully_qualified_or_none("typing.Mapping")
+            if not mapping or not mapping.node:
+                api.defer()
+                return
+
+            mapping_str_any_type = Instance(mapping.node, [str_type, implicit_any])
+            maybe_mapping_str_any_type = make_optional(mapping_str_any_type)
 
             if fullname == CAT_PATH:
                 attr_class_maker_callback(
@@ -58,7 +95,14 @@ class CatsPlugin(Plugin):
                     add_static_method(
                         cls_def_ctx,
                         STRUCTURE_NAME,
-                        [Argument(Var("d", dict_type), dict_type, None, ARG_POS)],
+                        [
+                            Argument(
+                                Var("d", mapping_str_any_type),
+                                mapping_str_any_type,
+                                None,
+                                ARG_POS,
+                            )
+                        ],
                         fill_typevars(info),
                     )
                 if TRY_STRUCTURE_NAME not in info.names:
@@ -66,7 +110,14 @@ class CatsPlugin(Plugin):
                     add_static_method(
                         cls_def_ctx,
                         TRY_STRUCTURE_NAME,
-                        [Argument(Var("d", dict_type), dict_type, None, ARG_POS)],
+                        [
+                            Argument(
+                                Var("d", maybe_mapping_str_any_type),
+                                maybe_mapping_str_any_type,
+                                None,
+                                ARG_POS,
+                            )
+                        ],
                         fill_typevars(info),
                     )
                 if UNSTRUCTURE_NAME not in info.names:
@@ -89,7 +140,7 @@ def deserialize_funcdefs(stmts):
 
 
 def add_static_method(
-    ctx, name: str, args: ty.List[Argument], return_type: Type
+    ctx, function_name: str, args: ty.List[Argument], return_type: Type
 ) -> None:
     """Mostly copied from mypy.plugins.common, with changes to make it work for a static method."""
     info = ctx.cls.info
@@ -99,19 +150,19 @@ def add_static_method(
     for arg in args:
         assert arg.type_annotation, "All arguments must be fully typed."
         arg_types.append(arg.type_annotation)
-        arg_names.append(arg.variable.name())
+        arg_names.append(nameit(arg.variable))
         arg_kinds.append(arg.kind)
 
     signature = CallableType(
         arg_types, arg_kinds, arg_names, return_type, function_type
     )
 
-    func = FuncDef(name, args, Block([PassStmt()]))
+    func = FuncDef(function_name, args, Block([PassStmt()]))
     func.is_static = True
     func.info = info
     func.type = set_callable_name(signature, func)
-    func._fullname = info.fullname() + "." + name
+    func._fullname = fullname(info) + "." + function_name
     func.line = info.line
 
-    info.names[name] = SymbolTableNode(MDEF, func, plugin_generated=True)
+    info.names[function_name] = SymbolTableNode(MDEF, func, plugin_generated=True)
     info.defn.defs.body.append(func)

@@ -10,7 +10,7 @@ pylint = "*"
 
 [packages]
 cattrs = "==1.0.0rc0"
-attrs = "~=19.1.0"
+attrs = "==19.1.0"
 typecats = {path = ".",editable = true}
 
 [requires]

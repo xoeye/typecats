@@ -122,14 +122,14 @@ class TypeCat:
     """
 
     @staticmethod
-    def struc(_d: dict) -> ty.Any:
+    def struc(_d: ty.Mapping[str, ty.Any]) -> ty.Any:
         return TypeCat()  # this is a lie - don't worry about it
 
     @staticmethod
-    def try_struc(_d: dict) -> ty.Any:
+    def try_struc(_d: ty.Optional[ty.Mapping[str, ty.Any]]) -> ty.Any:
         return TypeCat()
 
-    def unstruc(self) -> dict:
+    def unstruc(self) -> ty.Dict[str, ty.Any]:
         return unstruc(self)
 
 

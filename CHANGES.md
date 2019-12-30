@@ -1,4 +1,13 @@
-### 1.2.0
+### 1.3.0
+
+Improved mypy plugin that recognizes `Mapping[str, Any]` as the
+appropriate input type for `struc`, and `Optional[Mapping[str, Any]]`
+for `try_struc`.
+
+Also resolves the incompatibility with the mypy plugin API change in
+0.750.
+
+## 1.2.0
 
 Wildcats will now unstructure their 'wild' key/value pairs instead of
 passing them through.
