@@ -20,8 +20,8 @@ Throwing `cattrs` into the mix, you can have pleasant and simple
 conversions to and from unstructured data with extremely low
 boilerplate as well.
 
-`typecats`, and its core decorator `Cat`, is a thin opionated layer on
-top of these two runtime libraries (`attrs` and `cattrs`) and the
+`typecats`, and its core decorator `Cat`, is a thin opinionated layer
+on top of these two runtime libraries (`attrs` and `cattrs`) and the
 develop-time `mypy`. It defines an `attrs` class with a few additional
 features. The 3 core features are:
 
