@@ -1,3 +1,7 @@
+## 1.3.1
+
+Corrected return type of `try_struc` to be `Optional[T]`.
+
 ### 1.3.0
 
 Improved mypy plugin that recognizes `Mapping[str, Any]` as the

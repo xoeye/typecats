@@ -82,7 +82,10 @@ class CatsPlugin(Plugin):
                 api.defer()
                 return
 
-            mapping_str_any_type = Instance(mapping.node, [str_type, implicit_any])
+            mapping_str_any_type = Instance(
+                mapping.node,  # type: ignore # i don't understand this one but it works
+                [str_type, implicit_any],
+            )
             maybe_mapping_str_any_type = make_optional(mapping_str_any_type)
 
             if fullname == CAT_PATH:
@@ -90,6 +93,8 @@ class CatsPlugin(Plugin):
                     cls_def_ctx, True
                 )  # since a Cat is also an attr.s class...
                 info = cls_def_ctx.cls.info
+                cat_return_type = fill_typevars(info)
+                maybe_cat_return_type = make_optional(cat_return_type)
 
                 if STRUCTURE_NAME not in info.names:
                     add_static_method(
@@ -103,10 +108,9 @@ class CatsPlugin(Plugin):
                                 ARG_POS,
                             )
                         ],
-                        fill_typevars(info),
+                        cat_return_type,
                     )
                 if TRY_STRUCTURE_NAME not in info.names:
-                    # print('adding ' + TRY_STRUCTURE_NAME + ' to ' + str(info.fullname()) )
                     add_static_method(
                         cls_def_ctx,
                         TRY_STRUCTURE_NAME,
@@ -118,7 +122,7 @@ class CatsPlugin(Plugin):
                                 ARG_POS,
                             )
                         ],
-                        fill_typevars(info),
+                        maybe_cat_return_type,
                     )
                 if UNSTRUCTURE_NAME not in info.names:
                     add_method(cls_def_ctx, UNSTRUCTURE_NAME, [], dict_type)
