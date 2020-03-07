@@ -1,8 +1,12 @@
-## 1.3.1
+## 1.3.2
+
+Reworked Wildcat functionality to use a cleaner hooking process.
+
+### 1.3.1
 
 Corrected return type of `try_struc` to be `Optional[T]`.
 
-### 1.3.0
+## 1.3.0
 
 Improved mypy plugin that recognizes `Mapping[str, Any]` as the
 appropriate input type for `struc`, and `Optional[Mapping[str, Any]]`

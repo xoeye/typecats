@@ -3,6 +3,7 @@
 import typing as ty
 import logging
 
+from cattr.converters import _is_attrs_class
 from .attrs_shim import get_attrs_names
 
 
@@ -13,12 +14,8 @@ MWC = ty.TypeVar("MWC", bound=ty.MutableMapping)
 WC = ty.TypeVar("WC", bound=ty.Mapping)
 
 
-def is_wildcat(cls_or_obj: ty.Union[object, type]) -> bool:
-    return (
-        hasattr(cls_or_obj, "__setitem__")
-        and hasattr(cls_or_obj, "__getitem__")
-        and hasattr(cls_or_obj, "__iter__")
-    )
+def is_wildcat(cls: type) -> bool:
+    return _is_attrs_class(cls) and dict in cls.__mro__
 
 
 def _strip_defined_abstract_methods(cls):

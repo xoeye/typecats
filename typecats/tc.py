@@ -13,7 +13,9 @@ from .wildcat import (
     MWC,
     mixin_wildcat_post_attrs_methods,
     setup_warnings_for_dangerous_dict_subclass_operations,
+    is_wildcat,
 )
+from .cattrs_hooks import patch_cattrs_function_dispatch
 
 
 logger = logging.getLogger(__name__)
@@ -50,21 +52,30 @@ class TypeCat:
         return unstruc(self)
 
 
+def make_struc(converter: cattr.Converter):
+    def _struc(cl: ty.Type[C], obj: StrucInput) -> C:
+        """A wrapper for cattrs structure that logs and re-raises structure exceptions."""
+        try:
+            return converter.structure(obj, cl)
+        except CommonStructuringExceptions as e:
+            _log_structure_exception(e, obj, cl)
+            raise e
+
+    return _struc
+
+
+def make_unstruc(converter: cattr.Converter):
+    def _unstruc(obj: ty.Any) -> ty.Any:
+        """A wrapper for cattrs unstructure using the internal converter"""
+        return converter.unstructure(obj)
+
+    return _unstruc
+
+
 TYPECATS_CONVERTER = cattr.Converter()
 
-
-def struc(cl: ty.Type[C], obj: StrucInput) -> C:
-    """A wrapper for cattrs structure that logs and re-raises structure exceptions."""
-    try:
-        return TYPECATS_CONVERTER.structure(obj, cl)
-    except CommonStructuringExceptions as e:
-        _log_structure_exception(e, obj, cl)
-        raise e
-
-
-def unstruc(obj: ty.Any) -> UnstrucOutput:
-    """A wrapper for cattrs unstructure using the internal converter"""
-    return TYPECATS_CONVERTER.unstructure(obj)
+struc = make_struc(TYPECATS_CONVERTER)
+unstruc = make_unstruc(TYPECATS_CONVERTER)
 
 
 def struc_wildcat(Type: ty.Type[MWC], d: ty.Mapping) -> MWC:
@@ -82,18 +93,31 @@ def struc_wildcat(Type: ty.Type[MWC], d: ty.Mapping) -> MWC:
 
     """
     try:
-        wildcat_attrs_names = get_attrs_names(Type)
         # use our converter directly to avoid infinite recursion
         wildcat = TYPECATS_CONVERTER.structure_attrs_fromdict(d, Type)  # type: ignore
         # we have a partial wildcat. now add in all the things that weren't structured
-        wildcat.update({key: d[key] for key in d if key not in wildcat_attrs_names})
+        wildcat.update({key: d[key] for key in d if key not in get_attrs_names(Type)})
         return wildcat
     except CommonStructuringExceptions as e:
         _log_structure_exception(e, d, Type)
         raise e
 
 
-def unstruc_wildcat(wildcat: WC) -> UnstrucOutput:
+def _enrich_unstructured_wildcat(
+    obj: WC, unstructured_obj_dict: UnstrucOutput
+) -> UnstrucOutput:
+    wildcat_attrs_names = get_attrs_names(type(obj))
+    wildcat_nonattrs_dict = {
+        key: unstruc(obj[key]) for key in obj if key not in wildcat_attrs_names
+    }
+    # note that typed entries take absolute precedence over untyped in case of collisions.
+    # these collisions should generally be prevented at runtime by the wildcat
+    # logic that is injected into the type, but if something were to sneak through
+    # we would prefer whatever had been set via the attribute.
+    return {**wildcat_nonattrs_dict, **unstructured_obj_dict}
+
+
+def _unstruc_wildcat(unstructure_handler, obj) -> UnstrucOutput:
     """Unstructures a Wildcat by extracting the untyped key/value pairs,
 
     then updating that dict with the result of the typed attrs object unstructure.
@@ -101,17 +125,19 @@ def unstruc_wildcat(wildcat: WC) -> UnstrucOutput:
     Note that this always chooses the typed value in any key collisions if the Wildcat
     implementation happens to allow those.
     """
-    wildcat_attrs_names = get_attrs_names(type(wildcat))
-    # use our converter directly to avoid infinite recursion
-    wildcat_dict = TYPECATS_CONVERTER.unstructure_attrs_asdict(wildcat)  # type: ignore
-    wildcat_nonattrs_dict = {
-        key: unstruc(wildcat[key]) for key in wildcat if key not in wildcat_attrs_names
-    }
-    # note that typed entries take absolute precedence over untyped in case of collisions.
-    # these collisions should generally be prevented at runtime by the wildcat
-    # logic that is injected into the type, but if something were to sneak through
-    # we would prefer whatever had been set via the attribute.
-    return {**wildcat_nonattrs_dict, **wildcat_dict}
+    rv = unstructure_handler(obj)
+    if (
+        unstructure_handler == TYPECATS_CONVERTER.unstructure_attrs_asdict
+        and is_wildcat(type(obj))
+    ):
+        return _enrich_unstructured_wildcat(obj, rv)
+    return rv
+
+
+# this is how we make sure that we get to enrich wildcats at unstructure time
+patch_cattrs_function_dispatch(
+    TYPECATS_CONVERTER._unstructure_func, _unstruc_wildcat  # type: ignore
+)
 
 
 def make_try_struc(
@@ -174,7 +200,6 @@ def Cat(maybe_cls=None, auto_attribs=True, disallow_empties=True, **kwargs):
         if is_wild:
             setup_warnings_for_dangerous_dict_subclass_operations(cls)
             register_struc_hook(cls, lambda obj, typ: struc_wildcat(typ, obj))
-            register_unstruc_hook(cls, unstruc_wildcat)
 
         # it is always safe to apply this decorator, even if there's already an attrs_attrs on a base class.
         cls = cat_attrs(
@@ -183,24 +208,18 @@ def Cat(maybe_cls=None, auto_attribs=True, disallow_empties=True, **kwargs):
 
         cat_structure_method = struc_wildcat if is_wild else struc
         cat_try_struc = partial(make_try_struc, cat_structure_method)
-        cat_unstructure_method = unstruc_wildcat if is_wild else unstruc
 
         @staticmethod  # type: ignore
         def struc_cat(d: StrucInput) -> C:
             return cat_structure_method(cls, d)
 
-        setattr(cls, STRUCTURE_NAME, struc_cat)
-
         @staticmethod  # type: ignore
         def try_struc_cat(d: ty.Optional[StrucInput]) -> ty.Optional[C]:
             return cat_try_struc(cls, d)
 
+        setattr(cls, STRUCTURE_NAME, struc_cat)
         setattr(cls, TRY_STRUCTURE_NAME, try_struc_cat)
-
-        def unstruc_to_dict(self) -> UnstrucOutput:
-            return cat_unstructure_method(self)
-
-        setattr(cls, UNSTRUCTURE_NAME, unstruc_to_dict)
+        setattr(cls, UNSTRUCTURE_NAME, unstruc)
 
         if is_wild:
             mixin_wildcat_post_attrs_methods(cls)
