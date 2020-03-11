@@ -57,6 +57,7 @@ def test_wildcats():
         wrapped.wildcat["adjust"] = 88
 
     wc = MyWildcat.struc(dwc)
+    assert type(wc) == MyWildcat
     print(wc)
     wc["favorite_color"] = "green"
     print(wc)
@@ -67,7 +68,10 @@ def test_wildcats():
     lwc = LocatedWildcat.struc(wc.unstruc())
     print("Located wildcat at " + lwc.location)
 
+    assert lwc.location == "Colorado"
     lwc["location"] = "Georgia"
+    # even when a defined attribut is set on a Wildcat via __setitem__ instead of __set__,
+    # the actual __dict__ attribute gets overwritten correctly.
     assert lwc["location"] == "Georgia"
     assert lwc.location == "Georgia"
 
@@ -158,5 +162,14 @@ def test_nested_wildcats_still_unstructure():
     mwd = mw.unstruc()
     assert mwd["foo"] == "foo"
     assert mwd["hidden"]["bar"] == "bar"
-    assert mwd["hidden"]["nested_hidden"]["reqd"] == 8
-    assert mwd["hidden"]["nested_hidden"]["wow"] == "UAU!!!!!!"
+    assert mwd["hidden"]["nested_hidden"] == dict(reqd=8, wow="UAU!!!!!!")
+
+
+def test_wildcat_with_id():
+    @Cat
+    class WithId(dict):
+        id: str
+        age: int
+
+    wi = WithId.struc(dict(id="iii", age=4))
+    assert wi == WithId("iii", 4)

@@ -29,6 +29,7 @@ def test_cats_decorator() -> None:
 
     dct = dict(name="Tom", age=0, neutered=False)
     ct = CatTest.struc(dct)
+    assert type(ct) == CatTest
     assert ct.name == "Tom"
     assert ct.age == 0
     assert not ct.neutered

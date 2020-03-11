@@ -1,4 +1,17 @@
-## 1.3.2
+## 1.4.0
+
+Extracted the default `cattrs` Converter from all implementations to
+make `typecats` fully compatible with the use of any
+application-provided Converter(s).
+
+All that is necessary to use an externally-supplied converter is to
+call the new `patch_converter_for_typecats` function exported by the
+package root on the Converter. This will patch your Converter to
+enable `typecats` functionality while still maintaining all the
+existing functionality and previously-registered function-dispatched
+structure and unstructure hooks within your Converter.
+
+### 1.3.2
 
 Reworked Wildcat functionality to use a cleaner hooking process.
 
