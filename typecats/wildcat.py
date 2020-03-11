@@ -3,7 +3,7 @@
 import typing as ty
 import logging
 
-from cattr.converters import _is_attrs_class
+from cattr.converters import _is_attrs_class, Converter
 from .attrs_shim import get_attrs_names
 
 
@@ -16,6 +16,48 @@ WC = ty.TypeVar("WC", bound=ty.Mapping)
 
 def is_wildcat(cls: type) -> bool:
     return _is_attrs_class(cls) and dict in cls.__mro__
+
+
+def enrich_structured_wildcat(
+    wildcat: MWC, prestructured_obj_dict: ty.Mapping[ty.Any, ty.Any], Type: type
+):
+    """A Wildcat is a Cat (an attrs class) that additionally allows
+    arbitrary key-value access as though it were a dict for data that
+    does not have a defined attribute name on the class (i.e. is not typed).
+
+    This is intended to provide a smooth transition for types that
+    have some dynamic elements, but as though dynamic elements become
+    'settled', they can be directly typed and statically
+    typed-checked. It also makes for a good partially-typed
+    passthrough defintion if you need to retain and later transmit
+    unknown keys while still letting your code reason about the types
+    that you do know about.
+
+    """
+    wildcat.update(
+        {
+            key: prestructured_obj_dict[key]
+            for key in prestructured_obj_dict
+            if key not in get_attrs_names(Type)
+        }
+    )
+
+
+def enrich_unstructured_wildcat(
+    converter: Converter, obj: WC, unstructured_obj_dict: dict
+) -> dict:
+    wildcat_attrs_names = get_attrs_names(type(obj))
+    wildcat_nonattrs_dict = {
+        # TODO make unstruc depend on the current converter...
+        key: converter.unstructure(obj[key])
+        for key in obj
+        if key not in wildcat_attrs_names
+    }
+    # note that typed entries take absolute precedence over untyped in case of collisions.
+    # these collisions should generally be prevented at runtime by the wildcat
+    # logic that is injected into the type, but if something were to sneak through
+    # we would prefer whatever had been set via the attribute.
+    return {**wildcat_nonattrs_dict, **unstructured_obj_dict}
 
 
 def _strip_defined_abstract_methods(cls):
