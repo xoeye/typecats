@@ -132,13 +132,18 @@ def Cat(
     off this behavior with the pedestrianly-named boolean flag
     'disallow_empties=False'.
 
-    Note that each defined Cat type has a 'built-in' cattrs
-    Converter. By default, this is the typecats default Converter.
-    You may choose to specify your own Converter at the time of
-    defining your Cat type via the `converter` keyword argument.
+    Note that each defined Cat type has a 'built-in' cattrs Converter
+    that gets used when you call the static or object methods `struc`,
+    `try_struc`, or `unstruc`. By default, this is the typecats
+    default Converter.  You may choose to specify your own Converter
+    at the time of defining your Cat type via the `converter` keyword
+    argument.
 
     However, any Cat type should work with any cattrs Converter
-    as long as that Converter has been patched using `patch_converter_for_typecats`.
+    directly, (i.e. `your_converter.structure(your_data, YourCatType)`)
+    as long as that Converter has been patched using
+    `patch_converter_for_typecats`.
+
     """
 
     def make_cat(cls: ty.Type[C]) -> ty.Type[C]:
