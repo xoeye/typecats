@@ -48,7 +48,6 @@ def enrich_unstructured_wildcat(
 ) -> dict:
     wildcat_attrs_names = get_attrs_names(type(obj))
     wildcat_nonattrs_dict = {
-        # TODO make unstruc depend on the current converter...
         key: converter.unstructure(obj[key])
         for key in obj
         if key not in wildcat_attrs_names
@@ -124,7 +123,8 @@ def mixin_wildcat_post_attrs_methods(cls):
 
     def __repr__(self):
         if dict in cls.__mro__:
-            wildcat_part = f"+Wildcat{dict(self.items())}" if self.keys() else ""
+            wd = dict(dict.items(self)) if dict.keys(self) else None
+            wildcat_part = f"+Wildcat{wd}" if wd else ""
         else:
             wildcat_part = (
                 f"+Wildcat{self.__wildcat_dict}" if self.__wildcat_dict else ""

@@ -1,3 +1,8 @@
+### 1.4.1
+
+No longer assume that the `dict` methods will not be overlaid on a
+Wildcat by `attrs` attributes.
+
 ## 1.4.0
 
 Extracted the default `cattrs` Converter from all implementations to

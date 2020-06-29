@@ -173,3 +173,18 @@ def test_wildcat_with_id():
 
     wi = WithId.struc(dict(id="iii", age=4))
     assert wi == WithId("iii", 4)
+
+
+def test_wildcat_repr_no_conflicts():
+    @Cat
+    class WithDictMethodAttrs(dict):
+        items: ty.List[int]
+        keys: ty.Set[str]
+
+    wdma = WithDictMethodAttrs([1, 2, 3], {"a", "b"})
+
+    assert "Wildcat" not in str(wdma)
+
+    wdma["test"] = "a str"
+
+    assert "Wildcat" in str(wdma)
