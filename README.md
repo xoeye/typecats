@@ -199,6 +199,23 @@ features. The 3 core features are:
    a Wildcat but its underlying `dict` would be overlaid and
    inaccessible as a Wildcat.
 
+4. ### Strip `attrs` defaults on unstructure
+
+   All attributes where the value matches the default, except for
+   attributes annotated as `Literal`, can have their defaults stripped
+   recursively during unstructure.
+
+   This is accomplished via a new built-in Converter instance, and
+   does not require use of features 1-3; in fact it will work with
+   pure `attrs` classes.
+
+   This is new as of 1.5.0, is not the default behavior, and is
+   fully backwards-compatible. It is enabled by a specific call to
+   `unstruc_strip_defaults` or via a boolean keyword-only argument on
+   the mixin method, `obj.unstruc(strip_defaults=True)`.
+
+
+
 
 ## Notes on intent, compatibility, and dependencies
 

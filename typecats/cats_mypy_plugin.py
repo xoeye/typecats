@@ -7,6 +7,7 @@ from mypy.nodes import (
     Var,
     Argument,
     ARG_POS,
+    ARG_NAMED_OPT,
     FuncDef,
     PassStmt,
     Block,
@@ -75,6 +76,7 @@ class CatsPlugin(Plugin):
 
             dict_type = cls_def_ctx.api.named_type("__builtins__.dict")
             str_type = cls_def_ctx.api.named_type("__builtins__.str")
+            bool_type = cls_def_ctx.api.named_type("__builtins__.bool")
             api = cls_def_ctx.api
             implicit_any = AnyType(TypeOfAny.special_form)
             mapping = api.lookup_fully_qualified_or_none("typing.Mapping")
@@ -125,7 +127,19 @@ class CatsPlugin(Plugin):
                         maybe_cat_return_type,
                     )
                 if UNSTRUCTURE_NAME not in info.names:
-                    add_method(cls_def_ctx, UNSTRUCTURE_NAME, [], dict_type)
+                    add_method(
+                        cls_def_ctx,
+                        UNSTRUCTURE_NAME,
+                        [
+                            Argument(
+                                Var("strip_defaults", bool_type),
+                                bool_type,
+                                None,
+                                ARG_NAMED_OPT,
+                            )
+                        ],
+                        dict_type,
+                    )
 
         if fullname == CAT_PATH:
             return add_struc_and_unstruc_to_classdefcontext
