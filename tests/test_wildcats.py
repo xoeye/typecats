@@ -178,8 +178,8 @@ def test_wildcat_with_id():
 def test_wildcat_repr_no_conflicts():
     @Cat
     class WithDictMethodAttrs(dict):
-        items: ty.List[int]
-        keys: ty.Set[str]
+        items: ty.List[int]  # type: ignore
+        keys: ty.Set[str]  # type: ignore
 
     wdma = WithDictMethodAttrs([1, 2, 3], {"a", "b"})
 

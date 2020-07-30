@@ -13,6 +13,7 @@ from .wildcat import (
 )
 from .types import C, StrucInput, UnstrucOutput, CommonStructuringExceptions
 from .patch import patch_converter_for_typecats, log_structure_exception
+from .strip_defaults import get_stripping_converter
 
 
 class TypeCat:
@@ -55,9 +56,14 @@ def make_struc(converter: cattr.Converter):
     return _struc
 
 
-def make_unstruc(converter: cattr.Converter):
-    def _unstruc(obj: ty.Any) -> ty.Any:
+def make_unstruc(
+    converter: cattr.Converter,
+    stripping_converter: cattr.Converter = get_stripping_converter(),
+):
+    def _unstruc(obj: ty.Any, *, strip_defaults: bool = False) -> ty.Any:
         """A wrapper for cattrs unstructure using the internal converter"""
+        if strip_defaults:
+            return stripping_converter.unstructure(obj)
         return converter.unstructure(obj)
 
     return _unstruc
@@ -199,7 +205,9 @@ def set_struc_converter(
 
 
 def set_unstruc_converter(
-    cls: ty.Type[C], converter: cattr.Converter = _TYPECATS_DEFAULT_CONVERTER
+    cls: ty.Type[C],
+    converter: cattr.Converter = _TYPECATS_DEFAULT_CONVERTER,
+    strip_defaults_converter: cattr.Converter = get_stripping_converter(),
 ):
     """If you want to change your mind about the built-in Converter that
     is meant to run when you call the object method YourCatObj.unstruc(), you
@@ -207,5 +215,5 @@ def set_unstruc_converter(
     keyword argument on the Cat decorator.
 
     """
-    _unstruc = make_unstruc(converter)
+    _unstruc = make_unstruc(converter, strip_defaults_converter)
     setattr(cls, UNSTRUCTURE_NAME, _unstruc)

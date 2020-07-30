@@ -1,3 +1,13 @@
+## 1.5.0
+
+New converter which will strip (recursively) all attributes which are
+equal to their attrs defaults, except for attributes annotated as
+`Literal`, which are assumed to be required.
+
+Can be called using `unstruc_strip_defaults(your_attrs_obj)`, or on a
+Cat type using the new boolean keyword argument on `unstruc`,
+`your_cats_obj.unstruc(strip_defaults=True)`.
+
 ### 1.4.1
 
 No longer assume that the `dict` methods will not be overlaid on a
