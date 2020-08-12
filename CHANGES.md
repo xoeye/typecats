@@ -1,3 +1,9 @@
+## 1.6.0
+
+Added new exception hook functionality for better visibility into
+structuring errors. By default adds verbose logging when your item
+fails to structure, but this default behavior may be replaced.
+
 ## 1.5.0
 
 New converter which will strip (recursively) all attributes which are
