@@ -1,15 +1,10 @@
 import typing as ty
-import traceback
-import logging
 
 import cattr
 
 from .wildcat import is_wildcat, enrich_unstructured_wildcat, enrich_structured_wildcat
 from .cattrs_hooks import ConverterContextPatch
 from .types import CommonStructuringExceptions, StructureHook, C
-
-
-logger = logging.getLogger(__name__)
 
 
 __converters_patched = list()
@@ -66,18 +61,14 @@ class TypecatsCattrPatch(ConverterContextPatch):
                 enrich_structured_wildcat(structured, obj_to_structure, Type)
             return structured
         except CommonStructuringExceptions as e:
-            log_structure_exception(e, obj_to_structure, Type)
+            _embed_exception_info(e, obj_to_structure, Type)
             raise e
 
 
-def log_structure_exception(exception: Exception, item: ty.Any, Type: type):
-    type_name = getattr(Type, "__name__", str(Type))
-    logger.info(
-        f"Failed to structure {type_name} from {item}",
-        extra=dict(
-            json=dict(item=item),
-            traceback=traceback.format_exception(
-                None, exception, exception.__traceback__
-            ),
-        ),
-    )
+_TYPECATS_PATCH_EXCEPTION_ATTR = "__typecats_exc_stack"
+
+
+def _embed_exception_info(exception: Exception, item: ty.Any, Type: type):
+    typecats_stack = getattr(exception, _TYPECATS_PATCH_EXCEPTION_ATTR, list())
+    typecats_stack.append((item, Type))
+    setattr(exception, _TYPECATS_PATCH_EXCEPTION_ATTR, typecats_stack)
