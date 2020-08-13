@@ -20,10 +20,9 @@ def _simple_type_name(Type: type) -> str:
     return getattr(Type, "__name__", str(Type))
 
 
-def _default_log_structure_exception(
+def _assemble_default_exception_msg(
     exception: Exception, item: ty.Any, Type: type, typecats_stack: TypecatsStack
-) -> None:
-
+) -> str:
     failure_item, failure_type = typecats_stack[-1]
     type_path = [_simple_type_name(type_) for _item, type_ in typecats_stack]
     full_context = (
@@ -31,15 +30,24 @@ def _default_log_structure_exception(
         if failure_item is not item
         else ""
     )
-    logger.warning(
-        f"Failed to structure {_simple_type_name(failure_type)} from item <{failure_item}>{full_context}",
-        extra=dict(
-            json=dict(item=item, typecats_stack=typecats_stack),
-            traceback=traceback.format_exception(
-                None, exception, exception.__traceback__
+    return f"Failed to structure {_simple_type_name(failure_type)} from item <{failure_item}>{full_context}"
+
+
+def _default_log_structure_exception(
+    exception: Exception, item: ty.Any, Type: type, typecats_stack: TypecatsStack
+) -> None:
+    try:
+        logger.warning(
+            _assemble_default_exception_msg(exception, item, Type, typecats_stack),
+            extra=dict(
+                json=dict(item=item, typecats_stack=typecats_stack),
+                traceback=traceback.format_exception(
+                    None, exception, exception.__traceback__
+                ),
             ),
-        ),
-    )
+        )
+    except Exception:  # noqa # broad catch because this is nonessential
+        logger.exception("Logging failure")
 
 
 _EXCEPTION_HOOK: TypecatsCommonExceptionHook = _default_log_structure_exception
