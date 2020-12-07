@@ -105,3 +105,18 @@ def test_works_with_pure_attrs_obj():
     b = Strippable(i=4, lst=[1])
 
     assert unstruc_strip_defaults(b) == dict(lst=[1], i=4)
+
+
+def test_default_comparsion_works_on_structured_value():
+    @Cat
+    class Nested:
+        i: int = 2
+
+    @Cat
+    class HasNested:
+        id: str
+        nested: Nested = fac(Nested)
+
+    hd = HasNested("ben")
+    assert hd.nested.i == 2
+    assert hd.unstruc(strip_defaults=True) == dict(id="ben")

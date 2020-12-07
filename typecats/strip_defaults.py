@@ -45,19 +45,13 @@ def _strip_attr_defaults(
     }
 
 
-def _get_names_of_defaulted_attrs(
-    unstructured: ty.Dict[str, ty.Any], attrs_obj: ty.Any
-) -> ty.Set[str]:
-    """We must provide the partially unstructured version of the object in
-    case this is a wildcat with keys that aren't defined as part of
-    the Attr type.
-    """
+def _get_names_of_defaulted_nonliteral_attrs(attrs_obj: ty.Any) -> ty.Set[str]:
     res: ty.Set[str] = set()
     for _attr in attrs_obj.__attrs_attrs__:
         if getattr(_attr.type, "__origin__", None) is Literal:
             # don't strip attributes annotated as Literals - they're requirements, not "defaults"
             continue
-        if unstructured.get(_attr.name, _MISSING) == _get_attr_default_value(_attr):
+        if getattr(attrs_obj, _attr.name, _MISSING) == _get_attr_default_value(_attr):
             res.add(_attr.name)
     return res
 
@@ -66,9 +60,7 @@ def _strip_attrs_defaults(
     unstructured_but_unclean: ty.Any, obj_to_unstructure: ty.Any
 ) -> ty.Any:
     if _is_attrs_class(obj_to_unstructure.__class__):
-        keys_to_strip = _get_names_of_defaulted_attrs(
-            unstructured_but_unclean, obj_to_unstructure
-        )
+        keys_to_strip = _get_names_of_defaulted_nonliteral_attrs(obj_to_unstructure)
         return {
             k: v for k, v in unstructured_but_unclean.items() if k not in keys_to_strip
         }

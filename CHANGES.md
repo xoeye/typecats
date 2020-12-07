@@ -1,3 +1,10 @@
+### 1.6.1
+
+- Wildcats now properly implement `__eq__` to include the actual
+  wildcat dictionary. Additionally, this fixes a bug where
+  `unstruc_strip_defaults` did not properly strip attributes that
+  themselves had unstructurable data.
+
 ## 1.6.0
 
 Added new exception hook functionality for better visibility into

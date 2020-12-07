@@ -188,3 +188,30 @@ def test_wildcat_repr_no_conflicts():
     wdma["test"] = "a str"
 
     assert "Wildcat" in str(wdma)
+
+
+def test_wildcat_equality_takes_wildcat_key_values_into_account():
+    @Cat
+    class Nested(dict):
+        i: int
+
+    @Cat
+    class Wildcat2(dict):
+        species: str
+        n: Nested
+
+    base = dict(species="young", n=dict(i=7, j=10))
+
+    wc = Wildcat2.struc(base)
+    assert wc == Wildcat2.struc(base)
+
+    wc.n["p"] = "j"
+    assert wc != Wildcat2.struc(base)
+
+    del wc.n["p"]
+
+    assert wc == Wildcat2.struc(base)
+
+    wc.n.i = 8
+
+    assert wc != Wildcat2.struc(base)
