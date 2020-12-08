@@ -150,4 +150,12 @@ def mixin_wildcat_post_attrs_methods(cls):
     if not hasattr(cls, "__bool__"):
         setattr(cls, "__bool__", __bool__)
 
+    attrs_equals = getattr(cls, "__eq__")
+
+    def __eq__(self, other):
+        at_eq = attrs_equals(self, other)
+        return at_eq and super(cls, self).__eq__(other)
+
+    setattr(cls, "__eq__", __eq__)
+
     _strip_defined_abstract_methods(cls)
