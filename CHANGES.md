@@ -1,3 +1,9 @@
+### 1.6.2
+
+- Upgrades `cattrs` from 1.0.0 to 1.1.2 and `attrs` from 19.1.0 to 20.3.0,
+  primarily to fix a `cattrs` bug wherein union field types where types in the
+  union have defaults are not always correctly structured.
+
 ### 1.6.1
 
 - Wildcats now properly implement `__eq__` to include the actual
