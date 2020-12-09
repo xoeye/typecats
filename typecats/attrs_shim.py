@@ -1,13 +1,22 @@
 """Shim for attrs to make `Cat`s possible.
 
-Current attrs version supported is 19.1.0
+Current attrs version supported is 20.3.0
 
 """
 # pylint: disable=redefined-builtin
 import typing as ty
 from decimal import Decimal
 
-from attr._make import NOTHING, _ClassBuilder
+from attr._make import (
+    NOTHING,
+    _ClassBuilder,
+    _determine_eq_order,
+    _determine_whether_to_implement,
+    _has_frozen_base_class,
+    _has_own_attribute
+)
+from attr.exceptions import PythonTooOldError
+from attr._compat import PY2
 
 
 _SCALAR_TYPES_WITH_NO_EMPTY_VALUES = (bool, float, int, Decimal)
@@ -17,10 +26,10 @@ def cat_attrs(
     maybe_cls=None,
     these=None,
     repr_ns=None,
-    repr=True,
-    cmp=True,
+    repr=None,
+    cmp=None,
     hash=None,
-    init=True,
+    init=None,
     slots=False,
     frozen=False,
     weakref_slot=True,
@@ -30,56 +39,117 @@ def cat_attrs(
     cache_hash=False,
     disallow_empties=True,
     auto_exc=False,
+    eq=None,
+    order=None,
+    auto_detect=False,
+    collect_by_mro=False,
+    getstate_setstate=None,
+    on_setattr=None,
+    field_transformer=None,
 ):
-    """Copied from attrs._make in attrs 19.1.0 in order to allow dynamic adding of validators!
+    """Copied from attrs._make in attrs 20.3.0 in order to allow dynamic adding of validators!
+    https://github.com/python-attrs/attrs/blob/20.3.0/src/attr/_make.py#L1013
 
     The only difference is (or should be...) the hook_builder_before_doing_anything call.
     """
+    if auto_detect and PY2:
+        raise PythonTooOldError(
+            "auto_detect only works on Python 3 and later."
+        )
+
+    eq_, order_ = _determine_eq_order(cmp, eq, order, None)
+    hash_ = hash  # work around the lack of nonlocal
+
+    if isinstance(on_setattr, (list, tuple)):
+        on_setattr = setters.pipe(*on_setattr)
 
     def wrap(cls):
+
         if getattr(cls, "__class__", None) is None:
             raise TypeError("attrs only works with new-style classes.")
 
+        is_frozen = frozen or _has_frozen_base_class(cls)
         is_exc = auto_exc is True and issubclass(cls, BaseException)
+        has_own_setattr = auto_detect and _has_own_attribute(
+            cls, "__setattr__"
+        )
+
+        if has_own_setattr and is_frozen:
+            raise ValueError("Can't freeze a class with a custom __setattr__.")
 
         builder = _ClassBuilder(
             cls,
             these,
             slots,
-            frozen,
+            is_frozen,
             weakref_slot,
+            _determine_whether_to_implement(
+                cls,
+                getstate_setstate,
+                auto_detect,
+                ("__getstate__", "__setstate__"),
+                default=slots,
+            ),
             auto_attribs,
             kw_only,
             cache_hash,
             is_exc,
+            collect_by_mro,
+            on_setattr,
+            has_own_setattr,
+            field_transformer,
         )
 
         _hook_builder_before_doing_anything(builder, disallow_empties=disallow_empties)
 
-        if repr is True:
+        if _determine_whether_to_implement(
+            cls, repr, auto_detect, ("__repr__",)
+        ):
             builder.add_repr(repr_ns)
         if str is True:
             builder.add_str()
-        if cmp is True and not is_exc:
-            builder.add_cmp()
 
+        eq = _determine_whether_to_implement(
+            cls, eq_, auto_detect, ("__eq__", "__ne__")
+        )
+        if not is_exc and eq is True:
+            builder.add_eq()
+        if not is_exc and _determine_whether_to_implement(
+            cls, order_, auto_detect, ("__lt__", "__le__", "__gt__", "__ge__")
+        ):
+            builder.add_order()
+
+        builder.add_setattr()
+
+        if (
+            hash_ is None
+            and auto_detect is True
+            and _has_own_attribute(cls, "__hash__")
+        ):
+            hash = False
+        else:
+            hash = hash_
         if hash is not True and hash is not False and hash is not None:
             # Can't use `hash in` because 1 == True for example.
-            raise TypeError("Invalid value for hash.  Must be True, False, or None.")
-        elif hash is False or (hash is None and cmp is False):
+            raise TypeError(
+                "Invalid value for hash.  Must be True, False, or None."
+            )
+        elif hash is False or (hash is None and eq is False) or is_exc:
+            # Don't do anything. Should fall back to __object__'s __hash__
+            # which is by id.
             if cache_hash:
                 raise TypeError(
                     "Invalid value for cache_hash.  To use hash caching,"
                     " hashing must be either explicitly or implicitly "
                     "enabled."
                 )
-        elif (
-            hash is True
-            or (hash is None and cmp is True and frozen is True)
-            and is_exc is False
+        elif hash is True or (
+            hash is None and eq is True and is_frozen is True
         ):
+            # Build a __hash__ if told so, or if it's safe.
             builder.add_hash()
         else:
+            # Raise TypeError on attempts to hash.
             if cache_hash:
                 raise TypeError(
                     "Invalid value for cache_hash.  To use hash caching,"
@@ -88,7 +158,9 @@ def cat_attrs(
                 )
             builder.make_unhashable()
 
-        if init is True:
+        if _determine_whether_to_implement(
+            cls, init, auto_detect, ("__init__",)
+        ):
             builder.add_init()
         else:
             if cache_hash:

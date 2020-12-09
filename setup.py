@@ -22,8 +22,8 @@ setup(
     package_data={"": ["py.typed"]},
     python_requires=">=3.6",
     install_requires=[
-        "attrs == 19.1",
-        "cattrs == 1.0.0rc0",
+        "attrs == 20.3.0",
+        "cattrs == 1.1.2",
         # 'python-dateutil ~= 2.8',
     ],
     # it is important to keep these install_requires basically in sync with the Pipfile as well.
