@@ -20,7 +20,7 @@ setup(
     long_description_content_type="text/markdown",
     packages=find_packages(),
     package_data={"": ["py.typed"]},
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     install_requires=[
         "attrs == 20.3.0",
         "cattrs == 1.1.2",

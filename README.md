@@ -23,7 +23,7 @@ boilerplate as well.
 `typecats`, and its core decorator `Cat`, is a thin opinionated layer
 on top of these two runtime libraries (`attrs` and `cattrs`) and the
 develop-time `mypy`. It defines an `attrs` class with a few additional
-features. The 3 core features are:
+features. The 4 core features are:
 
 ## Features
 
@@ -241,8 +241,13 @@ the built-in converter instance.
 `typecats` uses newer-style static typing within its own codebase, and
 is therefore currently only compatible with Python 3.6 and up.
 
+### Python version compatibility
+
 As core parts of the implementation, both `attrs` and `cattrs` are
-runtime dependencies.
+specific-version runtime dependencies. `cattrs` is the more
+restrictive library in terms of its compatibility, so as of 1.7.0,
+because of the upgrade to `cattrs` 1.1.x, `typecats` is compatible
+with Python 3.7 through 3.9.
 
 #### mypy plugin
 
