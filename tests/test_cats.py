@@ -80,10 +80,10 @@ def test_nested_with_structurer() -> None:
 
 
 def test_union_structuring():
-    # This tests that a bug in cattrs 1.0.0 is fixed
+    # This tests that a bug in cattrs is fixed
     # In that bug, union types are disambiguated using unique fields that are allowed to be
     # optional fields with defaults. But optional fields might not be present.
-    # Here we have a type `Bar` where every field except one is optional, so cattrs 1.0.0
+    # Here we have a type `Bar` where every field except one is optional, so a previous version of cattrs
     # would usually pick an optional field as the unique field, causing struc to raise an exception.
     # Note that this test is nondeterministic since cattrs' choice of unique field is random.
     @Cat
