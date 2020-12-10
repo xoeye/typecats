@@ -77,3 +77,37 @@ def test_nested_with_structurer() -> None:
     unstructured_task = task.unstruc()
     assert unstructured_task["created_at"] == dts
     assert unstructured_task["completed_at"] == "2019-08-08T14:02:03.000005Z"
+
+
+def test_union_structuring():
+    # This tests that a bug in cattrs 1.0.0 is fixed
+    # In that bug, union types are disambiguated using unique fields that are allowed to be
+    # optional fields with defaults. But optional fields might not be present.
+    # Here we have a type `Bar` where every field except one is optional, so cattrs 1.0.0
+    # would usually pick an optional field as the unique field, causing struc to raise an exception.
+    # Note that this test is nondeterministic since cattrs' choice of unique field is random.
+    @Cat
+    class Bar:
+        a: str
+        b: str = "b"
+        c: str = "c"
+        d: str = "d"
+        e: str = "e"
+        f: str = "f"
+        g: str = "g"
+        h: str = "h"
+        i: str = "i"
+        j: str = "j"
+
+    @Cat
+    class Baz:
+        z: str
+
+    @Cat
+    class Foo:
+        union: ty.Union[Bar, Baz]
+
+    try:
+        Foo.struc(dict(union=dict(a="some_value")))
+    except Exception as exc:
+        raise AssertionError(f"Exception {repr(exc)} was raised when it should not have been.")
