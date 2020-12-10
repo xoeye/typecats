@@ -1,4 +1,4 @@
-### 1.6.2
+### 1.7.0
 
 - Upgrades `cattrs` from 1.0.0 to 1.1.2 and `attrs` from 19.1.0 to 20.3.0,
   primarily to fix a `cattrs` bug wherein union field types where types in the
