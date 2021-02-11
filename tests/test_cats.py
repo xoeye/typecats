@@ -17,10 +17,10 @@ class CatTest:
 
 def test_cats_decorator() -> None:
 
-    with pytest.raises(TypeError):
+    with pytest.raises(KeyError):
         # missing neutered
         CatTest.struc(dict(name="Tom", age=2, alive=False))
-    with pytest.raises(TypeError):
+    with pytest.raises(KeyError):
         # missing age
         CatTest.struc(dict(name="Tom", neutered=False, alive=False))
     with pytest.raises(ValueError):
@@ -110,4 +110,6 @@ def test_union_structuring():
     try:
         Foo.struc(dict(union=dict(a="some_value")))
     except Exception as exc:
-        raise AssertionError(f"Exception {repr(exc)} was raised when it should not have been.")
+        raise AssertionError(
+            f"Exception {repr(exc)} was raised when it should not have been."
+        )

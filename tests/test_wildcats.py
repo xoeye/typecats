@@ -53,10 +53,11 @@ def test_wildcats():
 
     wrapped = Wrapper.struc(dict(wrap=False, wildcat=dwc))
     print(wrapped)
-    if wrapped.wildcat:
-        wrapped.wildcat["adjust"] = 88
+    wrapped.wildcat["adjust"] = 88
 
+    print(dwc)
     wc = MyWildcat.struc(dwc)
+
     assert type(wc) == MyWildcat
     print(wc)
     wc["favorite_color"] = "green"
@@ -66,6 +67,7 @@ def test_wildcats():
     print(wc["location"])  # not a mypy type error
 
     lwc = LocatedWildcat.struc(wc.unstruc())
+    print(lwc)
     print("Located wildcat at " + lwc.location)
 
     assert lwc.location == "Colorado"

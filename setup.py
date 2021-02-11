@@ -23,7 +23,7 @@ setup(
     python_requires=">=3.7",
     install_requires=[
         "attrs == 20.3.0",
-        "cattrs == 1.1.2",
+        "cattrs == 1.2.0",
         # 'python-dateutil ~= 2.8',
     ],
     # it is important to keep these install_requires basically in sync with the Pipfile as well.

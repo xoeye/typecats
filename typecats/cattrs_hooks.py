@@ -2,7 +2,7 @@ import typing as ty
 
 from typing_extensions import Protocol
 
-from cattr.converters import Converter
+from cattr.converters import Converter, _is_attrs_class
 from cattr.multistrategy_dispatch import MultiStrategyDispatch
 
 C = ty.TypeVar("C")
@@ -66,3 +66,49 @@ class ConverterContextPatch:
     def unstructure_patch(self, original_handler: ty.Callable, obj: ty.Any) -> ty.Any:
         """Meant to be overridden - this is just a passthrough implementation."""
         return original_handler(obj)
+
+
+def _patch_cls_handlers(make_patch, cls_and_handlers):
+    return [
+        (cls, make_patch(handler)) if _is_attrs_class(cls) else (cls, handler)
+        for cls, handler in cls_and_handlers
+    ]
+
+
+# def _patch_register_cls_list(make_patch, msd):
+#     """We want to intercept future registrations of particular attrs classes"""
+
+#     orig = msd.register_cls_list
+
+#     def rcl(self, cls_and_handler):
+#         if self is msd:
+#             print("patching", cls_and_handler)
+#             orig(_patch_cls_handlers(make_patch, cls_and_handler))
+#         else:
+#             orig(cls_and_handler)
+
+#     type(msd).register_cls_list = rcl
+
+
+class InterceptedRegistryMultistrategyDispatch:
+    __slots__ = ("patch", "parent", "attrs_types")
+
+    def __init__(self, patch, parent):
+        self.patch = patch
+        self.parent = parent
+        self.attrs_types = dict()
+
+    def register_cls_list(self, cls_and_handler, *args, **kwargs):
+        single_dispatches = list()
+        for cls, handler in cls_and_handler:
+            if _is_attrs_class(cls):
+                self.attrs_types[cls] = self.patch(handler)
+            else:
+                single_dispatches.append((cls, handler))
+        self.parent.register_cls_list(single_dispatches, *args, **kwargs)
+
+    def dispatch(self, cls):
+        direct_dispatch = self.attrs_types.get(cls)
+        if direct_dispatch:
+            return direct_dispatch
+        return self.parent.dispatch(cls)

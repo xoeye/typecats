@@ -3,9 +3,9 @@ from functools import lru_cache
 from typing_extensions import Literal
 
 import attr
-from cattr.converters import _is_attrs_class, Converter
+from cattr.converters import _is_attrs_class, Converter, GenConverter
 
-from .patch import TypecatsCattrPatch
+from .patch import TypecatsCattrPatch, InterceptedRegistryMultistrategyDispatch
 
 C = ty.TypeVar("C")
 
@@ -68,6 +68,19 @@ def _strip_attrs_defaults(
 
 
 class StripAttrsDefaultsOnUnstructurePatch(TypecatsCattrPatch):
+    def __init__(self, converter):
+        super().__init__(converter)
+
+        def patch(handler):
+            def _(obj):
+                return self.unstructure_patch(handler, obj)
+
+            return _
+
+        converter._unstructure_func = InterceptedRegistryMultistrategyDispatch(
+            patch, converter._unstructure_func
+        )
+
     def unstructure_patch(
         self, original_handler: ty.Callable, obj_to_unstructure: ty.Any
     ) -> ty.Any:
@@ -75,7 +88,7 @@ class StripAttrsDefaultsOnUnstructurePatch(TypecatsCattrPatch):
         return _strip_attrs_defaults(rv, obj_to_unstructure)
 
 
-_STRIP_DEFAULTS_CONVERTER = Converter()  # create converter
+_STRIP_DEFAULTS_CONVERTER = GenConverter()  # create converter
 __PATCH = StripAttrsDefaultsOnUnstructurePatch(_STRIP_DEFAULTS_CONVERTER)  # patch it
 
 
