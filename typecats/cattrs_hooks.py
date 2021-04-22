@@ -68,28 +68,6 @@ class ConverterContextPatch:
         return original_handler(obj)
 
 
-def _patch_cls_handlers(make_patch, cls_and_handlers):
-    return [
-        (cls, make_patch(handler)) if _is_attrs_class(cls) else (cls, handler)
-        for cls, handler in cls_and_handlers
-    ]
-
-
-# def _patch_register_cls_list(make_patch, msd):
-#     """We want to intercept future registrations of particular attrs classes"""
-
-#     orig = msd.register_cls_list
-
-#     def rcl(self, cls_and_handler):
-#         if self is msd:
-#             print("patching", cls_and_handler)
-#             orig(_patch_cls_handlers(make_patch, cls_and_handler))
-#         else:
-#             orig(cls_and_handler)
-
-#     type(msd).register_cls_list = rcl
-
-
 class InterceptedRegistryMultistrategyDispatch:
     __slots__ = ("patch", "parent", "attrs_types")
 
@@ -106,6 +84,9 @@ class InterceptedRegistryMultistrategyDispatch:
             else:
                 single_dispatches.append((cls, handler))
         self.parent.register_cls_list(single_dispatches, *args, **kwargs)
+
+    def register_func_list(self, *args, **kwargs):
+        return self.parent.register_func_list(*args, **kwargs)
 
     def dispatch(self, cls):
         direct_dispatch = self.attrs_types.get(cls)

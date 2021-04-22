@@ -7,6 +7,7 @@ verify_ssl = true
 mypy = "*"
 pytest = "*"
 pylint = "*"
+pytest-cov = "*"
 
 [packages]
 cattrs = "==1.2.0"
