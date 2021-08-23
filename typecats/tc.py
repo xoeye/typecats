@@ -112,7 +112,6 @@ try_struc = partial(_try_struc, struc)
 
 
 patch_converter_for_typecats(_TYPECATS_DEFAULT_CONVERTER)
-# patch_converter_for_typecats(get_stripping_converter())
 
 
 def get_default_converter():
