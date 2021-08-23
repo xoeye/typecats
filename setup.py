@@ -23,7 +23,7 @@ setup(
     python_requires=">=3.7",
     install_requires=[
         "attrs == 20.3.0",
-        "cattrs == 1.1.2",
+        "cattrs == 1.8.0",
         "typing_extensions >= 3.7;python_version<'3.8'",
     ],
     # it is important to keep these install_requires basically in sync with the Pipfile as well.

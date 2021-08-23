@@ -4,9 +4,10 @@ import typing as ty
 import traceback
 import logging
 
-from .patch import _TYPECATS_PATCH_EXCEPTION_ATTR
-
 logger = logging.getLogger(__name__)
+
+
+_TYPECATS_PATCH_EXCEPTION_ATTR = "__typecats_exc_stack"
 
 
 TypecatsStack = ty.List[ty.Tuple[ty.Any, type]]
@@ -67,3 +68,9 @@ def _emit_exception_to_default_handler(
 ):
     global _EXCEPTION_HOOK
     _EXCEPTION_HOOK(exception, item, Type, typecats_stack)
+
+
+def _embed_exception_info(exception: Exception, item: ty.Any, Type: type):
+    typecats_stack = getattr(exception, _TYPECATS_PATCH_EXCEPTION_ATTR, list())
+    typecats_stack.append((item, Type))
+    setattr(exception, _TYPECATS_PATCH_EXCEPTION_ATTR, typecats_stack)

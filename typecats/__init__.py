@@ -5,10 +5,11 @@ from .tc import (  # noqa
     try_struc,
     register_struc_hook,
     register_unstruc_hook,
+    unstruc_strip_defaults,
 )
+
 from .wildcat import is_wildcat  # noqa
 from .patch import patch_converter_for_typecats  # noqa
-from .strip_defaults import unstruc_strip_defaults  # noqa
 
 from .__about__ import __version__
 

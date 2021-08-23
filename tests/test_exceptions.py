@@ -3,7 +3,7 @@ from typing import List
 import pytest
 
 from typecats import Cat
-from typecats.patch import CommonStructuringExceptions
+from typecats.types import CommonStructuringExceptions
 
 
 def test_exceptions_get_logged(caplog):
