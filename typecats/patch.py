@@ -8,7 +8,7 @@ from functools import partial
 
 from attr import has as is_attrs_class
 from cattr.converters import Converter
-from cattr.gen import make_dict_structure_fn, make_dict_unstructure_fn
+from cattr._compat import has_with_generic
 
 from .wildcat import is_wildcat, enrich_structured_wildcat, enrich_unstructured_wildcat
 from .strip_defaults import ShouldStripDefaults, strip_attrs_defaults
@@ -19,7 +19,7 @@ __patched_converters = list()
 
 
 def structure_wildcat_factory(converter, cls):
-    base_structure_func = make_dict_structure_fn(cls, converter)
+    base_structure_func = converter.gen_structure_attrs_fromdict(cls)
 
     def structure_typecat(dictionary, Type):
         try:
@@ -34,16 +34,16 @@ def structure_wildcat_factory(converter, cls):
     return structure_typecat
 
 
-def unstructure_strip_defaults_factory(converter, cls):
+def unstructure_strip_defaults_factory(gen_converter, cls):
 
-    base_unstructure_func = make_dict_unstructure_fn(cls, converter)
+    base_unstructure_func = gen_converter.gen_unstructure_attrs_fromdict(cls)
 
     def unstructure_strip_defaults(obj):
         res = base_unstructure_func(obj)
         if ShouldStripDefaults.get():
             res = strip_attrs_defaults(res, obj)
         if is_wildcat(cls):
-            return enrich_unstructured_wildcat(converter, obj, res)
+            return enrich_unstructured_wildcat(gen_converter, obj, res)
         return res
 
     return unstructure_strip_defaults
@@ -58,7 +58,7 @@ def patch_converter_for_typecats(converter: Converter) -> Converter:
     )
 
     converter.register_unstructure_hook_factory(
-        is_attrs_class, partial(unstructure_strip_defaults_factory, converter)
+        has_with_generic, partial(unstructure_strip_defaults_factory, converter)
     )
 
     __patched_converters.append(converter)

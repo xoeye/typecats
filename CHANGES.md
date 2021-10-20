@@ -1,7 +1,10 @@
-## 1.8.0
+# 2.0.0
 
 - Supports Python 3.8 and 3.9.
-- Upgrades `cattrs` from 1.1.2 to 1.8.0.
+- Upgrades `cattrs` from 1.1.2 to 1.9.0 and switches to the
+  GenConverter, which supports the newer style type annotations.
+  Because the new converters are opted into and actually required, this
+  is a breaking change.
 
 ## 1.7.1
 

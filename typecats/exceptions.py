@@ -37,6 +37,8 @@ def _assemble_default_exception_msg(
 def _default_log_structure_exception(
     exception: Exception, item: ty.Any, Type: type, typecats_stack: TypecatsStack
 ) -> None:
+    if not typecats_stack:
+        return
     try:
         logger.warning(
             _assemble_default_exception_msg(exception, item, Type, typecats_stack),
