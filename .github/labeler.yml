@@ -1,0 +1,14 @@
+tests:
+  - tests/**/*
+
+core:
+  - typecats/**/*
+
+dependencies:
+  - Pipfile*
+
+internal:
+  - ./CHANGES.md
+
+documentation:
+  - ./README.md
