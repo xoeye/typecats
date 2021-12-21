@@ -11,7 +11,7 @@ pytest-cov = "*"
 typing_extensions = ">=3.7.0"
 
 [packages]
-cattrs = "==1.8.0"
+cattrs = "==1.9.0"
 attrs = "==20.3.0"
 typecats = {path = ".",editable = true}
 
