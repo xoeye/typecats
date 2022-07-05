@@ -10,13 +10,14 @@ from decimal import Decimal
 from attr._make import (
     NOTHING,
     _ClassBuilder,
-    _determine_eq_order,
+    _determine_attrs_eq_order,
     _determine_whether_to_implement,
     _has_frozen_base_class,
-    _has_own_attribute
+    _has_own_attribute,
 )
+from attr import setters
 from attr.exceptions import PythonTooOldError
-from attr._compat import PY2
+from attr._compat import PY2, PY310
 
 
 _SCALAR_TYPES_WITH_NO_EMPTY_VALUES = (bool, float, int, Decimal)
@@ -46,18 +47,20 @@ def cat_attrs(
     getstate_setstate=None,
     on_setattr=None,
     field_transformer=None,
+    match_args=True,
 ):
-    """Copied from attrs._make in attrs 20.3.0 in order to allow dynamic adding of validators!
-    https://github.com/python-attrs/attrs/blob/20.3.0/src/attr/_make.py#L1013
+    """Copied from attrs._make in attrs 21.4.0 in order to allow dynamic adding of validators!
+    https://github.com/python-attrs/attrs/blob/21.4.0/src/attr/_make.py#L1219
 
-    The only difference is (or should be...) the hook_builder_before_doing_anything call.
+    The only differences are (or should be...):
+    - This docstring
+    - disallow_empties=True keyword argument
+    - hook_builder_before_doing_anything call.
     """
     if auto_detect and PY2:
-        raise PythonTooOldError(
-            "auto_detect only works on Python 3 and later."
-        )
+        raise PythonTooOldError("auto_detect only works on Python 3 and later.")
 
-    eq_, order_ = _determine_eq_order(cmp, eq, order, None)
+    eq_, order_ = _determine_attrs_eq_order(cmp, eq, order, None)
     hash_ = hash  # work around the lack of nonlocal
 
     if isinstance(on_setattr, (list, tuple)):
@@ -70,9 +73,7 @@ def cat_attrs(
 
         is_frozen = frozen or _has_frozen_base_class(cls)
         is_exc = auto_exc is True and issubclass(cls, BaseException)
-        has_own_setattr = auto_detect and _has_own_attribute(
-            cls, "__setattr__"
-        )
+        has_own_setattr = auto_detect and _has_own_attribute(cls, "__setattr__")
 
         if has_own_setattr and is_frozen:
             raise ValueError("Can't freeze a class with a custom __setattr__.")
@@ -100,11 +101,12 @@ def cat_attrs(
             field_transformer,
         )
 
+        # This should be the only change in here.
+        # I'm not sure why we're not hooking ClassBuilder's __init__ instead
+        # but I will be continuing the trend to keep things simple for now.
         _hook_builder_before_doing_anything(builder, disallow_empties=disallow_empties)
 
-        if _determine_whether_to_implement(
-            cls, repr, auto_detect, ("__repr__",)
-        ):
+        if _determine_whether_to_implement(cls, repr, auto_detect, ("__repr__",)):
             builder.add_repr(repr_ns)
         if str is True:
             builder.add_str()
@@ -131,9 +133,7 @@ def cat_attrs(
             hash = hash_
         if hash is not True and hash is not False and hash is not None:
             # Can't use `hash in` because 1 == True for example.
-            raise TypeError(
-                "Invalid value for hash.  Must be True, False, or None."
-            )
+            raise TypeError("Invalid value for hash.  Must be True, False, or None.")
         elif hash is False or (hash is None and eq is False) or is_exc:
             # Don't do anything. Should fall back to __object__'s __hash__
             # which is by id.
@@ -143,9 +143,7 @@ def cat_attrs(
                     " hashing must be either explicitly or implicitly "
                     "enabled."
                 )
-        elif hash is True or (
-            hash is None and eq is True and is_frozen is True
-        ):
+        elif hash is True or (hash is None and eq is True and is_frozen is True):
             # Build a __hash__ if told so, or if it's safe.
             builder.add_hash()
         else:
@@ -158,16 +156,18 @@ def cat_attrs(
                 )
             builder.make_unhashable()
 
-        if _determine_whether_to_implement(
-            cls, init, auto_detect, ("__init__",)
-        ):
+        if _determine_whether_to_implement(cls, init, auto_detect, ("__init__",)):
             builder.add_init()
         else:
+            builder.add_attrs_init()
             if cache_hash:
                 raise TypeError(
                     "Invalid value for cache_hash.  To use hash caching,"
                     " init must be True."
                 )
+
+        if PY310 and match_args and not _has_own_attribute(cls, "__match_args__"):
+            builder.add_match_args()
 
         return builder.build_class()
 

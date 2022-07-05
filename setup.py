@@ -1,6 +1,6 @@
 """Setup for typecats"""
 # type: ignore
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 PKG_NAME = "typecats"
 about = {}  # type: ignore
@@ -22,8 +22,8 @@ setup(
     package_data={"": ["py.typed"]},
     python_requires=">=3.7",
     install_requires=[
-        "attrs == 20.3.0",
-        "cattrs == 1.9.0",
+        "attrs == 21.4.0",
+        "cattrs == 22.1.0",
         "typing_extensions >= 3.7",
     ],
     # it is important to keep these install_requires basically in sync with the Pipfile as well.

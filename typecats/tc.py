@@ -102,7 +102,7 @@ def _try_struc(
 # Although typecats will not work fully without a defined Converter,
 # all of its functionality can be applied to any Converter instantiated by
 # an application.
-_TYPECATS_DEFAULT_CONVERTER = cattr.GenConverter()
+_TYPECATS_DEFAULT_CONVERTER = cattr.GenConverter(detailed_validation=False)
 
 struc = make_struc(
     _TYPECATS_DEFAULT_CONVERTER, hook_common_errors=_emit_exception_to_default_handler
