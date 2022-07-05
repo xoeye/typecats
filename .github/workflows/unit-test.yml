@@ -1,0 +1,23 @@
+name: Unit Tests
+
+on: push
+
+jobs:
+  unit-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.9"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pipenv
+          export PATH=/home/runner/.local/bin:$PATH
+          pipenv install --dev --skip-lock
+
+      - run: pipenv run pytest tests
+      - run: pipenv run mypy typecats
