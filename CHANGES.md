@@ -1,10 +1,11 @@
 # 2.0.0
 
 - Supports Python 3.8 and 3.9.
-- Upgrades `cattrs` from 1.1.2 to 1.9.0 and switches to the
+- Upgrades `cattrs` from 1.1.2 to 22.1.0, `attrs` from 20.3.0 to 21.4.0 and switches to the
   GenConverter, which supports the newer style type annotations.
   Because the new converters are opted into and actually required, this
   is a breaking change.
+- Exports `register_struc_hook_func` and `register_unstruc_hook_func`, which are methods bound to typecats's default cattrs converter.
 
 ## 1.7.1
 
@@ -90,7 +91,7 @@ The non-empty validator will still be run on attributes without defaults.
 ## 1.1.0
 
 No longer block `__setitem__`, `__getitem__`, and `update` for keys
-where the Wildcat class defines an attribute with the same name.  Log
+where the Wildcat class defines an attribute with the same name. Log
 warnings instead. This more permissive behavior will allow a smoother
 progression for code that was written before an attribute was
 subsequently added (typed).

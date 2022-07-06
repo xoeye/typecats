@@ -5,6 +5,8 @@ from .tc import (  # noqa
     try_struc,
     register_struc_hook,
     register_unstruc_hook,
+    register_struc_hook_func,
+    register_unstruc_hook_func,
     unstruc_strip_defaults,
 )
 

@@ -129,6 +129,16 @@ def register_unstruc_hook(*args, **kwargs):
     _TYPECATS_DEFAULT_CONVERTER.register_unstructure_hook(*args, **kwargs)
 
 
+def register_struc_hook_func(*args, **kwargs):
+    """Use this to register cattrs structuring hooks on the internal cattrs Converter"""
+    _TYPECATS_DEFAULT_CONVERTER.register_structure_hook_func(*args, **kwargs)
+
+
+def register_unstruc_hook_func(*args, **kwargs):
+    """Use this to register cattrs unstructuring hooks on the internal cattrs Converter"""
+    _TYPECATS_DEFAULT_CONVERTER.register_unstructure_hook_func(*args, **kwargs)
+
+
 def Cat(
     maybe_cls=None,
     auto_attribs=True,
