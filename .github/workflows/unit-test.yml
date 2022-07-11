@@ -19,5 +19,5 @@ jobs:
           export PATH=/home/runner/.local/bin:$PATH
           pipenv install --dev --skip-lock
 
-      - run: pipenv run pytest tests
       - run: pipenv run mypy typecats
+      - run: pipenv run pytest tests
