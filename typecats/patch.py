@@ -7,34 +7,34 @@ instead of typing.List[int].
 from functools import partial
 
 from attr import has as is_attrs_class
-from cattr.converters import Converter
+from cattrs.converters import GenConverter
 from cattrs._compat import has_with_generic
 
 from .wildcat import is_wildcat, enrich_structured_wildcat, enrich_unstructured_wildcat
 from .strip_defaults import ShouldStripDefaults, strip_attrs_defaults
-from .exceptions import _embed_exception_info
-from .types import CommonStructuringExceptions
+from .exceptions import _consolidate_exceptions, StructuringError, _embed_exception_info
 
 __patched_converters = list()
 
 
-def structure_wildcat_factory(converter, cls):
-    base_structure_func = converter.gen_structure_attrs_fromdict(cls)
+def structure_wildcat_factory(gen_converter: GenConverter, cls):
+    base_structure_func = gen_converter.gen_structure_attrs_fromdict(cls)
 
     def structure_typecat(dictionary, Type):
         try:
-            res = base_structure_func(dictionary, Type)
-            if is_wildcat(Type):
-                enrich_structured_wildcat(res, dictionary, Type)
-            return res
-        except CommonStructuringExceptions as e:
+            with _consolidate_exceptions(gen_converter, Type):
+                res = base_structure_func(dictionary, Type)
+                if is_wildcat(Type):
+                    enrich_structured_wildcat(res, dictionary, Type)
+                return res
+        except StructuringError as e:
             _embed_exception_info(e, dictionary, Type)
             raise e
 
     return structure_typecat
 
 
-def unstructure_strip_defaults_factory(gen_converter, cls):
+def unstructure_strip_defaults_factory(gen_converter: GenConverter, cls):
 
     base_unstructure_func = gen_converter.gen_unstructure_attrs_fromdict(cls)
 
@@ -49,7 +49,7 @@ def unstructure_strip_defaults_factory(gen_converter, cls):
     return unstructure_strip_defaults
 
 
-def patch_converter_for_typecats(converter: Converter) -> Converter:
+def patch_converter_for_typecats(converter: GenConverter) -> GenConverter:
     if converter in __patched_converters:
         return converter
 

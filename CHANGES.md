@@ -1,11 +1,18 @@
 # 2.0.0
 
-- Supports Python 3.8 and 3.9.
+Breaking changes:
+
 - Upgrades `cattrs` from 1.1.2 to 22.1.0, `attrs` from 20.3.0 to 21.4.0 and switches to the
-  GenConverter, which supports the newer style type annotations.
-  Because the new converters are opted into and actually required, this
-  is a breaking change.
+  GenConverter, which supports the newer style type annotations (e.g, list[] instead of typing.List[]).
+- Detailed validation from cattrs is enabled by default. Disable it if you wish by calling `set_detailed_validation_mode_not_threadsafe(enable=False)`
+- Removed `typecats.types.CommonStructuringExceptions`. Structuring validation errors are now all `typecats.StructuringError`s (aliased to `cattrs.errors.BaseValidationError`), regardless of detailed validation.
+
+Other changes:
+
 - Exports `register_struc_hook_func` and `register_unstruc_hook_func`, which are methods bound to typecats's default cattrs converter.
+- Changed imports from `cattr` to `cattrs`
+- Supports Python 3.8 and 3.9.
+- Changed function parameter types from `cattrs.Converter` to `cattrs.GenConverter` where necessary, though typecats assumes `GenConverter` throughout, so you should probably update too.
 
 ## 1.7.1
 

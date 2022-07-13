@@ -1,4 +1,5 @@
 # typecats
+
 Structure unstructured data for the purpose of static type
 checking. An opinionated wrapper for `attrs` and `cattrs`.
 
@@ -28,20 +29,24 @@ features. The 4 core features are:
 ## Features
 
 1. ### Built-in `struc` and `unstruc`.
+
    Static class function `struc` and object method `unstruc` added to
    every class type defined as a Cat, which pass directly through to
    their underlying `structure` and `unstructure` implementations in
    `cattrs`.
 
-   ```
+   ```python
    @Cat
    class TestCat:
-	   name: str
-	   age: int
+      name: str
+      age: int
 
-   TestCat.struc(dict(name='Tom', age=9)) == TestCat(name='Tom', age=9)
+   try:
+      TestCat.struc(dict(name='Tom', age=9)) == TestCat(name='Tom', age=9)
 
-   TestCat.struc(dict(name='Tom', age=9)).unstruc() == dict(name='Tom', age=9)
+      TestCat.struc(dict(name='Tom', age=9)).unstruc() == dict(name='Tom', age=9)
+   except StructuringException as e:
+      ...
    ```
 
    #### Rationale
@@ -60,7 +65,7 @@ features. The 4 core features are:
    that these dynamically-added methods are real and provide the
    intended result types. Add to your `mypy.ini`:
 
-   ```
+   ```python
    plugins = typecats.cats_mypy_plugin
    ```
 
@@ -69,29 +74,29 @@ features. The 4 core features are:
    reverses the order of the `cattrs` function signature to make it
    suitable for the common case of partial application:
 
-   ```
+   ```python
    TestCat_struc = functools.partial(struc, TestCat)
    TestCat_struc(dict(name='Tom', age=2))
    ```
 
 2. ### Non-empty validators defined for all attributes with no default provided.
 
-   ```
+   ```python
    @Cat
    class TestCat:
-	   name: str
-	   age: int
-	   neutered: bool = True
-	   owner: Optional[Owner] = None
+      name: str
+      age: int
+      neutered: bool = True
+      owner: Optional[Owner] = None
 
    works = TestCat.struc(dict(name='Tom', age=0))
    assert works.neutered == True
 
    try:
-	   TestCat.struc(dict(name='', age=0))
-   except ValueError as ve:
-	   print(ve)
-	   # Attribute "name" on class <class 'TestCat'> with type <class 'str'> cannot have empty value ''!
+      TestCat.struc(dict(name='', age=0))
+   except StructuringError as ve:
+      print(ve)
+      # Attribute "name" on class <class 'TestCat'> with type <class 'str'> cannot have empty value ''!
    ```
 
    #### Rationale
@@ -125,11 +130,11 @@ features. The 4 core features are:
    allow a significant amount of extra functionality at the cost of
    not fully enforcing type-checking.
 
-   ```
+   ```python
    @Cat
    class TestWildcat(dict):
-	   name: str
-	   age: int
+      name: str
+      age: int
 
    cat_from_db = dict(name='Tom', age=8, gps_tracker=True)
    wc = TestWildcat.struc(cat_from_db)
@@ -192,7 +197,7 @@ features. The 4 core features are:
    was considered and rejected (so far) for two reasons: first, that
    this would require major additional work in order to support
    `pylint` and `mypy` understanding that dict-like access was legal
-   for these objects; and second, that *not* inheriting `dict` but
+   for these objects; and second, that _not_ inheriting `dict` but
    overriding `__getitem__` and `__setitem__` would be even more
    likely to conflict with existing class hierarchies, since any
    object that already inherited from `dict` would appear to 'work' as
@@ -214,12 +219,9 @@ features. The 4 core features are:
    `unstruc_strip_defaults` or via a boolean keyword-only argument on
    the mixin method, `obj.unstruc(strip_defaults=True)`.
 
-
-
-
 ## Notes on intent, compatibility, and dependencies
 
-`typecats` and `Cat` are explictly intended to solve a *few* specific
+`typecats` and `Cat` are explictly intended to solve a _few_ specific
 but common uses, and though they do not intentionally override or
 replace `attrs` or `cattrs` features, any complex use of those
 underlying features may or may not be fully operational. If you want

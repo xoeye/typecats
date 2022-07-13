@@ -5,5 +5,3 @@ StructureHook = ty.Callable[[ty.Any, ty.Type[C]], C]
 
 StrucInput = ty.Mapping[str, ty.Any]
 UnstrucOutput = dict
-
-CommonStructuringExceptions = (TypeError, AttributeError, ValueError, IndexError)

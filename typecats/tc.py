@@ -3,7 +3,7 @@
 import typing as ty
 from functools import partial
 
-import cattr
+import cattrs
 
 from .attrs_shim import cat_attrs
 from .wildcat import (
@@ -11,12 +11,13 @@ from .wildcat import (
     setup_warnings_for_dangerous_dict_subclass_operations,
     is_wildcat,
 )
-from .types import C, StrucInput, UnstrucOutput, CommonStructuringExceptions
+from .types import C, StrucInput, UnstrucOutput
 from .patch import patch_converter_for_typecats
 from .exceptions import (
     _extract_typecats_stack_if_any,
     _emit_exception_to_default_handler,
     TypecatsCommonExceptionHook,
+    StructuringError,
 )
 from .strip_defaults import ShouldStripDefaults
 from .stack_context import stack_context
@@ -46,7 +47,7 @@ class TypeCat:
 
 
 def make_struc(
-    converter: cattr.Converter,
+    converter: cattrs.Converter,
     *,
     hook_common_errors: ty.Optional[TypecatsCommonExceptionHook] = None,
 ):
@@ -63,7 +64,7 @@ def make_struc(
         """A wrapper for cattrs structure that logs and re-raises structure exceptions."""
         try:
             return converter.structure(obj, cl)
-        except CommonStructuringExceptions as e:
+        except StructuringError as e:
             if hook_common_errors:
                 hook_common_errors(e, obj, cl, _extract_typecats_stack_if_any(e))
             raise e
@@ -71,7 +72,7 @@ def make_struc(
     return _struc_with_hook
 
 
-def make_unstruc(converter: cattr.Converter):
+def make_unstruc(converter: cattrs.Converter):
     def _unstruc(obj: ty.Any, *, strip_defaults: bool = False) -> ty.Any:
         """A wrapper for cattrs unstructure using the internal converter"""
         with stack_context(ShouldStripDefaults, strip_defaults):
@@ -88,7 +89,7 @@ def _try_struc(
     """A wrapper for cattrs structure that suppresses and logs structure exceptions."""
     try:
         return structure_method(cl, obj)  # type: ignore
-    except CommonStructuringExceptions:
+    except StructuringError:
         return None
     except Exception as e:
         # unexpected errors will only go through the default handler
@@ -102,7 +103,7 @@ def _try_struc(
 # Although typecats will not work fully without a defined Converter,
 # all of its functionality can be applied to any Converter instantiated by
 # an application.
-_TYPECATS_DEFAULT_CONVERTER = cattr.GenConverter(detailed_validation=False)
+_TYPECATS_DEFAULT_CONVERTER = cattrs.GenConverter()
 
 struc = make_struc(
     _TYPECATS_DEFAULT_CONVERTER, hook_common_errors=_emit_exception_to_default_handler
@@ -139,11 +140,21 @@ def register_unstruc_hook_func(*args, **kwargs):
     _TYPECATS_DEFAULT_CONVERTER.register_unstructure_hook_func(*args, **kwargs)
 
 
+def set_detailed_validation_mode_not_threadsafe(enabled=True):
+    """
+    Controls the cattrs converter detailed validation mode.
+    Cattrs claims a 25% performance improvement from disabling detailed validation mode, YMMV.
+    WARNING: Not thread safe.
+    You should only call this once, preferrably at the start of your application.
+    """
+    _TYPECATS_DEFAULT_CONVERTER.detailed_validation = enabled
+
+
 def Cat(
     maybe_cls=None,
     auto_attribs=True,
     disallow_empties=True,
-    converter: cattr.Converter = _TYPECATS_DEFAULT_CONVERTER,
+    converter: cattrs.Converter = _TYPECATS_DEFAULT_CONVERTER,
     **kwargs,
 ):
     """A Cat knows how to take care of itself.
@@ -207,7 +218,7 @@ UNSTRUCTURE_NAME = "unstruc"
 
 def set_struc_converter(
     cls: ty.Type[C],
-    converter: cattr.Converter = _TYPECATS_DEFAULT_CONVERTER,
+    converter: cattrs.Converter = _TYPECATS_DEFAULT_CONVERTER,
     *,
     hook_common_errors: TypecatsCommonExceptionHook = _emit_exception_to_default_handler,
 ):
@@ -234,7 +245,7 @@ def set_struc_converter(
 
 
 def set_unstruc_converter(
-    cls: ty.Type[C], converter: cattr.Converter = _TYPECATS_DEFAULT_CONVERTER
+    cls: ty.Type[C], converter: cattrs.Converter = _TYPECATS_DEFAULT_CONVERTER
 ):
     """If you want to change your mind about the built-in Converter that
     is meant to run when you call the object method YourCatObj.unstruc(), you

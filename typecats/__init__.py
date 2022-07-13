@@ -8,7 +8,10 @@ from .tc import (  # noqa
     register_struc_hook_func,
     register_unstruc_hook_func,
     unstruc_strip_defaults,
+    set_detailed_validation_mode_not_threadsafe,
 )
+
+from .exceptions import StructuringError  # noqa
 
 from .wildcat import is_wildcat  # noqa
 from .patch import patch_converter_for_typecats  # noqa
