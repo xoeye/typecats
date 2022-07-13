@@ -74,9 +74,9 @@ class CatsPlugin(Plugin):
         def add_struc_and_unstruc_to_classdefcontext(cls_def_ctx: ClassDefContext):
             """This MyPy hook tells MyPy that struc and unstruc will be present on a Cat"""
 
-            dict_type = cls_def_ctx.api.named_type("__builtins__.dict")
-            str_type = cls_def_ctx.api.named_type("__builtins__.str")
-            bool_type = cls_def_ctx.api.named_type("__builtins__.bool")
+            dict_type = cls_def_ctx.api.named_type("builtins.dict")
+            str_type = cls_def_ctx.api.named_type("builtins.str")
+            bool_type = cls_def_ctx.api.named_type("builtins.bool")
             api = cls_def_ctx.api
             implicit_any = AnyType(TypeOfAny.special_form)
             mapping = api.lookup_fully_qualified_or_none("typing.Mapping")
@@ -146,9 +146,7 @@ class CatsPlugin(Plugin):
         return None
 
 
-def serialize_info_name(
-    info: TypeInfo, name: str, class_path: str
-) -> ty.Dict[str, ty.Any]:
+def serialize_info_name(info: TypeInfo, name: str, class_path: str) -> ty.Dict[str, ty.Any]:
     slzed = info.names[name].serialize(class_path, name)
     return slzed
 
@@ -157,12 +155,10 @@ def deserialize_funcdefs(stmts):
     return [FuncDef.deserialize(stmt) for stmt in stmts if stmt[".class"] == "FuncDef"]
 
 
-def add_static_method(
-    ctx, function_name: str, args: ty.List[Argument], return_type: Type
-) -> None:
+def add_static_method(ctx, function_name: str, args: ty.List[Argument], return_type: Type) -> None:
     """Mostly copied from mypy.plugins.common, with changes to make it work for a static method."""
     info = ctx.cls.info
-    function_type = ctx.api.named_type("__builtins__.function")
+    function_type = ctx.api.named_type("builtins.function")
 
     arg_types, arg_names, arg_kinds = [], [], []
     for arg in args:
@@ -171,9 +167,7 @@ def add_static_method(
         arg_names.append(nameit(arg.variable))
         arg_kinds.append(arg.kind)
 
-    signature = CallableType(
-        arg_types, arg_kinds, arg_names, return_type, function_type
-    )
+    signature = CallableType(arg_types, arg_kinds, arg_names, return_type, function_type)
 
     func = FuncDef(function_name, args, Block([PassStmt()]))
     func.is_static = True
