@@ -5,6 +5,7 @@ instead of typing.List[int].
 
 """
 from functools import partial
+import typing as ty
 
 from attr import has as is_attrs_class
 from cattrs.converters import GenConverter
@@ -34,9 +35,11 @@ def structure_wildcat_factory(gen_converter: GenConverter, cls):
     return structure_typecat
 
 
-def unstructure_strip_defaults_factory(gen_converter: GenConverter, cls):
+def unstructure_strip_defaults_factory(gen_converter: GenConverter, cls: type):
 
-    base_unstructure_func = gen_converter.gen_unstructure_attrs_fromdict(cls)
+    # cattrs 22.1.0 has a bad type annotation, fixed in 22.2.0
+    UnstrucFunc = ty.Callable[[ty.Any], ty.Dict[str, ty.Any]]
+    base_unstructure_func: UnstrucFunc = gen_converter.gen_unstructure_attrs_fromdict(cls)
 
     def unstructure_strip_defaults(obj):
         res = base_unstructure_func(obj)

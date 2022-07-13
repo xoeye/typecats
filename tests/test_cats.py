@@ -65,15 +65,11 @@ class Task:
 
 def test_nested_with_structurer() -> None:
 
-    register_struc_hook(
-        datetime, lambda s, _t: datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%fZ")
-    )
+    register_struc_hook(datetime, lambda s, _t: datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%fZ"))
     register_unstruc_hook(datetime, lambda d: d.isoformat() + "Z")
 
     dts = "2019-06-27T13:04:04.000111Z"
-    dict_task = dict(
-        name="feed cats", created_at=dts, subtasks=[dict(name="empty bowl")]
-    )
+    dict_task = dict(name="feed cats", created_at=dts, subtasks=[dict(name="empty bowl")])
     task = Task.struc(dict_task)
 
     assert task.subtasks[0] == Subtask("empty bowl")
@@ -116,6 +112,4 @@ def test_union_structuring():
     try:
         Foo.struc(dict(union=dict(a="some_value")))
     except Exception as exc:
-        raise AssertionError(
-            f"Exception {repr(exc)} was raised when it should not have been."
-        )
+        raise AssertionError(f"Exception {repr(exc)} was raised when it should not have been.")

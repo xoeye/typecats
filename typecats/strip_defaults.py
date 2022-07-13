@@ -36,9 +36,7 @@ def _get_names_of_defaulted_nonliteral_attrs(attrs_obj: ty.Any) -> ty.Set[str]:
     return res
 
 
-def strip_attrs_defaults(
-    unstructured_but_unclean: ty.Any, obj_to_unstructure: ty.Any
-) -> ty.Any:
+def strip_attrs_defaults(unstructured_but_unclean: ty.Any, obj_to_unstructure: ty.Any) -> ty.Any:
     """The idea here is that when you are using pure dicts, a key can be
     missing to indicate absence.  But if you're dealing with typed
     objects, that's not possible since all keys are always present.  So
