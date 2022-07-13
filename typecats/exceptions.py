@@ -16,9 +16,7 @@ _TYPECATS_PATCH_EXCEPTION_ATTR = "__typecats_exc_stack"
 
 TypecatsStack = ty.List[ty.Tuple[ty.Any, type]]
 
-TypecatsCommonExceptionHook = ty.Callable[
-    [Exception, ty.Any, type, TypecatsStack], None
-]
+TypecatsCommonExceptionHook = ty.Callable[[Exception, ty.Any, type, TypecatsStack], None]
 
 
 StructuringError = BaseValidationError
@@ -38,7 +36,7 @@ class SimpleValidationError(BaseValidationError):
 
 
 @contextlib.contextmanager
-def _consolidate_exceptions(converter: Converter, cl: ty.Type[C]) -> C:
+def _consolidate_exceptions(converter: Converter, cl: ty.Type[C]):
     """Re-raises basic validation exceptions as a SimpleValidationException group.
     Cattrs added detailed validation in 22.1.0. TLDR: detailed validation now throws
     a BaseValidationError. Without it, validation can throw a bunch of different errors.
@@ -68,11 +66,12 @@ def _assemble_default_exception_msg(
     failure_item, failure_type = typecats_stack[-1]
     type_path = [_simple_type_name(type_) for _item, type_ in typecats_stack]
     full_context = (
-        f" at type path {type_path} within item {item}"
-        if failure_item is not item
-        else ""
+        f" at type path {type_path} within item {item}" if failure_item is not item else ""
     )
-    return f"Failed to structure {_simple_type_name(failure_type)} from item <{failure_item}>{full_context}"
+    return (
+        f"Failed to structure {_simple_type_name(failure_type)}"
+        f" from item <{failure_item}>{full_context}"
+    )
 
 
 def _default_log_structure_exception(
@@ -85,9 +84,7 @@ def _default_log_structure_exception(
             _assemble_default_exception_msg(exception, item, Type, typecats_stack),
             extra=dict(
                 json=dict(item=item, typecats_stack=typecats_stack),
-                traceback=traceback.format_exception(
-                    None, exception, exception.__traceback__
-                ),
+                traceback=traceback.format_exception(None, exception, exception.__traceback__),
             ),
         )
     except Exception:  # noqa # broad catch because this is nonessential
@@ -107,7 +104,7 @@ def _extract_typecats_stack_if_any(exception: Exception) -> TypecatsStack:
 
 
 def _emit_exception_to_default_handler(
-    exception: Exception, item: StrucInput, Type: type, typecats_stack: TypecatsStack
+    exception: Exception, item: ty.Optional[StrucInput], Type: type, typecats_stack: TypecatsStack
 ):
     global _EXCEPTION_HOOK
     _EXCEPTION_HOOK(exception, item, Type, typecats_stack)

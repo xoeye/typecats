@@ -6,6 +6,7 @@ Breaking changes:
   GenConverter, which supports the newer style type annotations (e.g, list[] instead of typing.List[]).
 - Detailed validation from cattrs is enabled by default. Disable it if you wish by calling `set_detailed_validation_mode_not_threadsafe(enable=False)`
 - Removed `typecats.types.CommonStructuringExceptions`. Structuring validation errors are now all `typecats.StructuringError`s (aliased to `cattrs.errors.BaseValidationError`), regardless of detailed validation.
+- MyPy plugin changed from resolving from `__builtins__.<type>` to `builtins.<type>` to avoid errors. This might not work on older mypy versions.
 
 Other changes:
 

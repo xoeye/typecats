@@ -111,9 +111,7 @@ def cat_attrs(
         if str is True:
             builder.add_str()
 
-        eq = _determine_whether_to_implement(
-            cls, eq_, auto_detect, ("__eq__", "__ne__")
-        )
+        eq = _determine_whether_to_implement(cls, eq_, auto_detect, ("__eq__", "__ne__"))
         if not is_exc and eq is True:
             builder.add_eq()
         if not is_exc and _determine_whether_to_implement(
@@ -123,11 +121,7 @@ def cat_attrs(
 
         builder.add_setattr()
 
-        if (
-            hash_ is None
-            and auto_detect is True
-            and _has_own_attribute(cls, "__hash__")
-        ):
+        if hash_ is None and auto_detect is True and _has_own_attribute(cls, "__hash__"):
             hash = False
         else:
             hash = hash_
@@ -162,8 +156,7 @@ def cat_attrs(
             builder.add_attrs_init()
             if cache_hash:
                 raise TypeError(
-                    "Invalid value for cache_hash.  To use hash caching,"
-                    " init must be True."
+                    "Invalid value for cache_hash.  To use hash caching," " init must be True."
                 )
 
         if PY310 and match_args and not _has_own_attribute(cls, "__match_args__"):

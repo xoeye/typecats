@@ -1,6 +1,6 @@
 """Setup for typecats"""
 # type: ignore
-from setuptools import find_packages, setup
+from setuptools import find_packages, setup  # type: ignore
 
 PKG_NAME = "typecats"
 about = {}  # type: ignore

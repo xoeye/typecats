@@ -57,7 +57,6 @@ def make_struc(
     wish to make your own top-level structure and unstructure
     functions, and maybe even set them specifically on various
     different Cat-annotated classes.
-
     """
 
     def _struc_with_hook(cl: ty.Type[C], obj: StrucInput) -> C:
@@ -93,9 +92,7 @@ def _try_struc(
         return None
     except Exception as e:
         # unexpected errors will only go through the default handler
-        _emit_exception_to_default_handler(
-            e, obj, cl, _extract_typecats_stack_if_any(e)
-        )
+        _emit_exception_to_default_handler(e, obj, cl, _extract_typecats_stack_if_any(e))
         return None
 
 
@@ -192,9 +189,7 @@ def Cat(
     def make_cat(cls: ty.Type[C]) -> ty.Type[C]:
         # it is always safe to apply this attrs-class-making decorator,
         # even if there's already an __attrs_attrs__ on a base class.
-        cls = cat_attrs(
-            cls, auto_attribs=auto_attribs, disallow_empties=disallow_empties, **kwargs
-        )
+        cls = cat_attrs(cls, auto_attribs=auto_attribs, disallow_empties=disallow_empties, **kwargs)
         if is_wildcat(cls):
             setup_warnings_for_dangerous_dict_subclass_operations(cls)
 
