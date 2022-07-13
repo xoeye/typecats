@@ -145,6 +145,7 @@ def set_detailed_validation_mode_not_threadsafe(enabled=True):
     You should only call this once, preferrably at the start of your application.
     """
     _TYPECATS_DEFAULT_CONVERTER.detailed_validation = enabled
+    _TYPECATS_DEFAULT_CONVERTER._structure_func.clear_cache()
 
 
 def Cat(
