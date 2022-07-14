@@ -37,9 +37,9 @@ def structure_wildcat_factory(gen_converter: GenConverter, cls):
 
 def unstructure_strip_defaults_factory(gen_converter: GenConverter, cls: type):
 
-    # cattrs 22.1.0 has a bad type annotation, fixed in 22.2.0
+    # Broken annotation in gen_structure_attrs_fromdict, fixed in cattrs 22.2.0
     UnstrucFunc = ty.Callable[[ty.Any], ty.Dict[str, ty.Any]]
-    base_unstructure_func: UnstrucFunc = gen_converter.gen_unstructure_attrs_fromdict(cls)
+    base_unstructure_func: UnstrucFunc = gen_converter.gen_unstructure_attrs_fromdict(cls)  # type: ignore
 
     def unstructure_strip_defaults(obj):
         res = base_unstructure_func(obj)
