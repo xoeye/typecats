@@ -1,74 +1,68 @@
+"""A new way of using cattrs that should simplify our code while
+allowing us to make use of the new GenConverter in cattrs, which is
+faster and supports new-style Python type annotations, e.g. list[int]
+instead of typing.List[int].
+
+"""
+from functools import partial
 import typing as ty
 
-import cattr
+from attr import has as is_attrs_class
+from cattrs.converters import GenConverter
+from cattrs._compat import has_with_generic
 
-from .wildcat import is_wildcat, enrich_unstructured_wildcat, enrich_structured_wildcat
-from .cattrs_hooks import ConverterContextPatch
-from .types import CommonStructuringExceptions, StructureHook, C
+from .wildcat import is_wildcat, enrich_structured_wildcat, enrich_unstructured_wildcat
+from .strip_defaults import ShouldStripDefaults, strip_attrs_defaults
+from .exceptions import _consolidate_exceptions, StructuringError, _embed_exception_info
 
-
-__converters_patched = list()
-
-
-def patch_converter_for_typecats(converter: cattr.Converter):
-    """Any Cat type will work with any cattrs Converter, but applying this
-    patch is necessary to make a Wildcat type work, and will add other
-    conveniences and possibly future features, so it is recommended
-    that any Converters you wish to use on Cat-annotated types be
-    patched for typecats by calling this function.
-    """
-    __converters_patched.append(TypecatsCattrPatch(converter))
+__patched_converters = list()
 
 
-class TypecatsCattrPatch(ConverterContextPatch):
-    """This patch is what makes Wildcats, in particular, work properly
-    within the context of `cattrs`. It should (and may safely) be
-    applied to any cattrs Converter that you wish to use with your
-    Wildcat types.
+def structure_wildcat_factory(gen_converter: GenConverter, cls):
+    base_structure_func = gen_converter.gen_structure_attrs_fromdict(cls)
 
-    In the future, typecats may also use this patch to provide
-    additional functionality, so it is recommended that you patch any
-    Converter with which you want to use any Cat-annotated type.
-    """
-
-    def unstructure_patch(
-        self, original_handler: ty.Callable, obj_to_unstructure: ty.Any
-    ) -> ty.Any:
-        """Unstructures a Wildcat by extracting the untyped key/value pairs,
-
-        then updating that dict with the result of the typed attrs object unstructure.
-
-        Note that this always chooses the typed value in any key collisions if the Wildcat
-        implementation happens to allow those.
-        """
-        rv = super().unstructure_patch(original_handler, obj_to_unstructure)
-        if is_wildcat(type(obj_to_unstructure)):
-            return enrich_unstructured_wildcat(self.converter, obj_to_unstructure, rv)
-        return rv
-
-    def structure_patch(
-        self,
-        original_handler: StructureHook,
-        obj_to_structure: ty.Any,
-        Type: ty.Type[C],
-    ) -> C:
-        """This handles Wildcat structuring and also provides much nicer error messages
-        when you have a structuring failure.
-        """
+    def structure_typecat(dictionary, Type):
         try:
-            structured = original_handler(obj_to_structure, Type)
-            if is_wildcat(Type):
-                enrich_structured_wildcat(structured, obj_to_structure, Type)
-            return structured
-        except CommonStructuringExceptions as e:
-            _embed_exception_info(e, obj_to_structure, Type)
+            with _consolidate_exceptions(gen_converter, Type):
+                res = base_structure_func(dictionary, Type)
+                if is_wildcat(Type):
+                    enrich_structured_wildcat(res, dictionary, Type)
+                return res
+        except StructuringError as e:
+            _embed_exception_info(e, dictionary, Type)
             raise e
 
+    return structure_typecat
 
-_TYPECATS_PATCH_EXCEPTION_ATTR = "__typecats_exc_stack"
+
+def unstructure_strip_defaults_factory(gen_converter: GenConverter, cls: type):
+
+    # Broken annotation in gen_structure_attrs_fromdict, fixed in cattrs 22.2.0
+    UnstrucFunc = ty.Callable[[ty.Any], ty.Dict[str, ty.Any]]
+    base_unstructure_func: UnstrucFunc = gen_converter.gen_unstructure_attrs_fromdict(cls)  # type: ignore
+
+    def unstructure_strip_defaults(obj):
+        res = base_unstructure_func(obj)
+        if ShouldStripDefaults.get():
+            res = strip_attrs_defaults(res, obj)
+        if is_wildcat(cls):
+            return enrich_unstructured_wildcat(gen_converter, obj, res)
+        return res
+
+    return unstructure_strip_defaults
 
 
-def _embed_exception_info(exception: Exception, item: ty.Any, Type: type):
-    typecats_stack = getattr(exception, _TYPECATS_PATCH_EXCEPTION_ATTR, list())
-    typecats_stack.append((item, Type))
-    setattr(exception, _TYPECATS_PATCH_EXCEPTION_ATTR, typecats_stack)
+def patch_converter_for_typecats(converter: GenConverter) -> GenConverter:
+    if converter in __patched_converters:
+        return converter
+
+    converter.register_structure_hook_factory(
+        is_attrs_class, partial(structure_wildcat_factory, converter)
+    )
+
+    converter.register_unstructure_hook_factory(
+        has_with_generic, partial(unstructure_strip_defaults_factory, converter)
+    )
+
+    __patched_converters.append(converter)
+    return converter

@@ -1,10 +1,10 @@
 from typing import Dict, Any
-from typing_extensions import Literal
 
 import attr
 from attr import Factory as fac
 
 from typecats import Cat, unstruc_strip_defaults
+from typecats._compat import Literal
 
 
 def test_clean_cats_basic():

@@ -1,8 +1,7 @@
 import typing as ty
 
-from .cattrs_hooks import C, StructureHook  # noqa
+C = ty.TypeVar("C")
+StructureHook = ty.Callable[[ty.Any, ty.Type[C]], C]
 
 StrucInput = ty.Mapping[str, ty.Any]
 UnstrucOutput = dict
-
-CommonStructuringExceptions = (TypeError, AttributeError, ValueError)

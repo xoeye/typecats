@@ -7,14 +7,16 @@ verify_ssl = true
 mypy = "*"
 pytest = "*"
 pylint = "*"
+pytest-cov = "*"
+typing_extensions = ">=3.7.0"
 
 [packages]
-cattrs = "==1.1.2"
-attrs = "==20.3.0"
+cattrs = "==22.1.0"
+attrs = "==21.4.0"
 typecats = {path = ".",editable = true}
 
 [requires]
-python_version = "3.7"
+python_version = "3.9"
 
 [pipenv]
 allow_prereleases = true

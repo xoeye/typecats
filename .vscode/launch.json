@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug mypy plugin",
+      "type": "python",
+      "request": "launch",
+      "module": "mypy",
+      "justMyCode": false,
+      "args": [".", "--raise-exceptions"],
+      "console": "internalConsole",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

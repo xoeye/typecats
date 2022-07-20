@@ -3,7 +3,7 @@
 import typing as ty
 from functools import partial
 
-import cattr
+import cattrs
 
 from .attrs_shim import cat_attrs
 from .wildcat import (
@@ -11,14 +11,16 @@ from .wildcat import (
     setup_warnings_for_dangerous_dict_subclass_operations,
     is_wildcat,
 )
-from .types import C, StrucInput, UnstrucOutput, CommonStructuringExceptions
+from .types import C, StrucInput, UnstrucOutput
 from .patch import patch_converter_for_typecats
 from .exceptions import (
     _extract_typecats_stack_if_any,
     _emit_exception_to_default_handler,
     TypecatsCommonExceptionHook,
+    StructuringError,
 )
-from .strip_defaults import get_stripping_converter
+from .strip_defaults import ShouldStripDefaults
+from .stack_context import stack_context
 
 
 class TypeCat:
@@ -45,7 +47,7 @@ class TypeCat:
 
 
 def make_struc(
-    converter: cattr.Converter,
+    converter: cattrs.Converter,
     *,
     hook_common_errors: ty.Optional[TypecatsCommonExceptionHook] = None,
 ):
@@ -55,14 +57,13 @@ def make_struc(
     wish to make your own top-level structure and unstructure
     functions, and maybe even set them specifically on various
     different Cat-annotated classes.
-
     """
 
     def _struc_with_hook(cl: ty.Type[C], obj: StrucInput) -> C:
         """A wrapper for cattrs structure that logs and re-raises structure exceptions."""
         try:
             return converter.structure(obj, cl)
-        except CommonStructuringExceptions as e:
+        except StructuringError as e:
             if hook_common_errors:
                 hook_common_errors(e, obj, cl, _extract_typecats_stack_if_any(e))
             raise e
@@ -70,15 +71,11 @@ def make_struc(
     return _struc_with_hook
 
 
-def make_unstruc(
-    converter: cattr.Converter,
-    stripping_converter: cattr.Converter = get_stripping_converter(),
-):
+def make_unstruc(converter: cattrs.Converter):
     def _unstruc(obj: ty.Any, *, strip_defaults: bool = False) -> ty.Any:
         """A wrapper for cattrs unstructure using the internal converter"""
-        if strip_defaults:
-            return stripping_converter.unstructure(obj)
-        return converter.unstructure(obj)
+        with stack_context(ShouldStripDefaults, strip_defaults):
+            return converter.unstructure(obj)
 
     return _unstruc
 
@@ -91,13 +88,11 @@ def _try_struc(
     """A wrapper for cattrs structure that suppresses and logs structure exceptions."""
     try:
         return structure_method(cl, obj)  # type: ignore
-    except CommonStructuringExceptions:
+    except StructuringError:
         return None
     except Exception as e:
         # unexpected errors will only go through the default handler
-        _emit_exception_to_default_handler(
-            e, obj, cl, _extract_typecats_stack_if_any(e)
-        )
+        _emit_exception_to_default_handler(e, obj, cl, _extract_typecats_stack_if_any(e))
         return None
 
 
@@ -105,7 +100,7 @@ def _try_struc(
 # Although typecats will not work fully without a defined Converter,
 # all of its functionality can be applied to any Converter instantiated by
 # an application.
-_TYPECATS_DEFAULT_CONVERTER = cattr.Converter()
+_TYPECATS_DEFAULT_CONVERTER = cattrs.GenConverter()
 
 struc = make_struc(
     _TYPECATS_DEFAULT_CONVERTER, hook_common_errors=_emit_exception_to_default_handler
@@ -132,11 +127,32 @@ def register_unstruc_hook(*args, **kwargs):
     _TYPECATS_DEFAULT_CONVERTER.register_unstructure_hook(*args, **kwargs)
 
 
+def register_struc_hook_func(*args, **kwargs):
+    """Use this to register cattrs structuring hooks on the internal cattrs Converter"""
+    _TYPECATS_DEFAULT_CONVERTER.register_structure_hook_func(*args, **kwargs)
+
+
+def register_unstruc_hook_func(*args, **kwargs):
+    """Use this to register cattrs unstructuring hooks on the internal cattrs Converter"""
+    _TYPECATS_DEFAULT_CONVERTER.register_unstructure_hook_func(*args, **kwargs)
+
+
+def set_detailed_validation_mode_not_threadsafe(enabled=True):
+    """
+    Controls the cattrs converter detailed validation mode.
+    Cattrs claims a 25% performance improvement from disabling detailed validation mode, YMMV.
+    WARNING: Not thread safe.
+    You should only call this once, preferrably at the start of your application.
+    """
+    _TYPECATS_DEFAULT_CONVERTER.detailed_validation = enabled
+    _TYPECATS_DEFAULT_CONVERTER._structure_func.clear_cache()
+
+
 def Cat(
     maybe_cls=None,
     auto_attribs=True,
     disallow_empties=True,
-    converter: cattr.Converter = _TYPECATS_DEFAULT_CONVERTER,
+    converter: cattrs.Converter = _TYPECATS_DEFAULT_CONVERTER,
     **kwargs,
 ):
     """A Cat knows how to take care of itself.
@@ -174,9 +190,7 @@ def Cat(
     def make_cat(cls: ty.Type[C]) -> ty.Type[C]:
         # it is always safe to apply this attrs-class-making decorator,
         # even if there's already an __attrs_attrs__ on a base class.
-        cls = cat_attrs(
-            cls, auto_attribs=auto_attribs, disallow_empties=disallow_empties, **kwargs
-        )
+        cls = cat_attrs(cls, auto_attribs=auto_attribs, disallow_empties=disallow_empties, **kwargs)
         if is_wildcat(cls):
             setup_warnings_for_dangerous_dict_subclass_operations(cls)
 
@@ -200,7 +214,7 @@ UNSTRUCTURE_NAME = "unstruc"
 
 def set_struc_converter(
     cls: ty.Type[C],
-    converter: cattr.Converter = _TYPECATS_DEFAULT_CONVERTER,
+    converter: cattrs.Converter = _TYPECATS_DEFAULT_CONVERTER,
     *,
     hook_common_errors: TypecatsCommonExceptionHook = _emit_exception_to_default_handler,
 ):
@@ -227,9 +241,7 @@ def set_struc_converter(
 
 
 def set_unstruc_converter(
-    cls: ty.Type[C],
-    converter: cattr.Converter = _TYPECATS_DEFAULT_CONVERTER,
-    strip_defaults_converter: cattr.Converter = get_stripping_converter(),
+    cls: ty.Type[C], converter: cattrs.Converter = _TYPECATS_DEFAULT_CONVERTER
 ):
     """If you want to change your mind about the built-in Converter that
     is meant to run when you call the object method YourCatObj.unstruc(), you
@@ -237,5 +249,14 @@ def set_unstruc_converter(
     keyword argument on the Cat decorator.
 
     """
-    _unstruc = make_unstruc(converter, strip_defaults_converter)
-    setattr(cls, UNSTRUCTURE_NAME, _unstruc)
+    setattr(cls, UNSTRUCTURE_NAME, make_unstruc(converter))
+
+
+def unstruc_strip_defaults(obj: ty.Any) -> ty.Any:
+    """A functional-ish interface for stripping defaults.
+
+    Note that if you need to use a specific converter,
+    you'll want to dig in and set this context directly.
+    """
+    with stack_context(ShouldStripDefaults, True):
+        return _TYPECATS_DEFAULT_CONVERTER.unstructure(obj)
