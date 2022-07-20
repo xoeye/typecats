@@ -1,11 +1,15 @@
 from __future__ import annotations
+
 import sys
 import typing as ty
 
-from typecats import Cat
 from attr import Factory as fac
+from typecats import Cat
 
-if sys.version_info > (3, 8):
+version_info = sys.version_info[0:3]
+is_py39_plus = version_info[:2] >= (3, 9)
+
+if is_py39_plus:
     # these tests only work with the new type annotations
     def test_new_annotations_work_fine():
         @Cat
