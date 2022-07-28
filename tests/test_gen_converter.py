@@ -1,12 +1,8 @@
 import typing as ty
 
-try:
-    from typing import Protocol
-except ImportError:
-    from typing_extensions import Protocol  # type: ignore
-
 from attr import Factory as fac
 from typecats import Cat, unstruc
+from typecats._compat import Protocol
 from typecats.patch import is_attrs_class
 
 
