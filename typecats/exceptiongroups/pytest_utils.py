@@ -22,6 +22,7 @@ It relies on internal pytest APIs which are succeptible to change at any time.
 Where needed, we pass `_ispytest=True` to suppress warnings.
 """
 import warnings
+from inspect import getfullargspec
 from types import TracebackType
 from typing import Optional, Type, cast
 
@@ -30,6 +31,8 @@ from pytest import fail
 
 from .._compat import BaseExceptionGroup, ExceptionGroup
 from . import ExceptionMatch, flattened_exceptions
+
+BYPASS_PYTEST_INTERNAL_WARNING = "_ispytest" in getfullargspec(ExceptionInfo.__init__).kwonlyargs
 
 
 class PytestInternalAPIChangedError(Exception):
@@ -89,7 +92,11 @@ class RaisesExceptionGroupContext(object):
         exc = exceptions[0]
 
         try:
-            self.excinfo.__init__((type(exc), exc, exc.__traceback__), _ispytest=True)  # type: ignore
+            exc_info = (type(exc), exc, exc.__traceback__)
+            if BYPASS_PYTEST_INTERNAL_WARNING:
+                self.excinfo.__init__(exc_info, _ispytest=True)  # type: ignore
+            else:
+                self.excinfo.__init__(exc_info)  # type: ignore
         except BaseException as e:
             msg = (
                 "Failed to populate exception info, please open an issue over at "
