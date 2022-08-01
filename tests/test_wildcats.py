@@ -1,9 +1,9 @@
-import typing as ty
 import json
+import typing as ty
 
 import pytest
-
 from typecats import Cat
+from typecats.exceptions import StructuringError
 
 from data_utils import ld
 
@@ -215,3 +215,31 @@ def test_wildcat_equality_takes_wildcat_key_values_into_account():
     wc.n.i = 8
 
     assert wc != Wildcat2.struc(base)
+
+
+def test_wildcat_struc_with_wildcat_backwards_compatibility():
+    @Cat
+    class Nested(dict):
+        i: int
+
+    @Cat
+    class WithNested:
+        nested: Nested
+
+    # This used to work with BaseConverter but stopped working with GenConverter.
+    c = WithNested.struc(dict(nested=Nested(i=6)))
+    assert c.nested.i == 6
+
+
+def test_wildcat_struc_with_non_wildcat_does_not_work():
+    @Cat
+    class Nested:
+        i: int
+
+    @Cat
+    class WithNested:
+        nested: Nested
+
+    # Make sure that this particular case only works with wildcats
+    with pytest.raises(StructuringError):
+        WithNested.struc(dict(nested=Nested(i=6)))

@@ -24,7 +24,12 @@ def structure_wildcat_factory(gen_converter: GenConverter, cls):
     def structure_typecat(dictionary, Type):
         try:
             with _consolidate_exceptions(gen_converter, Type):
-                res = base_structure_func(dictionary, Type)
+                if is_wildcat(Type) and isinstance(dictionary, Type):
+                    # Backwards compatibility for Cat.struc({"field": Wildcat(...)}) which worked with
+                    # the legacy BaseConverter but no longer works with GenConverter
+                    res = gen_converter.structure_attrs_fromdict(dictionary, Type)
+                else:
+                    res = base_structure_func(dictionary, Type)
                 if is_wildcat(Type):
                     enrich_structured_wildcat(res, dictionary, Type)
                 return res
