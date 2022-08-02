@@ -8,7 +8,7 @@ is_py310_plus = version_info[:2] >= (3, 10)
 is_py311_plus = version_info[:2] >= (3, 11)
 
 if is_py38_plus:
-    from typing import Literal, Protocol  # noqa
+    from typing import Literal, Protocol  # type: ignore # noqa
 else:
     from typing_extensions import Literal, Protocol  # type: ignore # noqa
 
