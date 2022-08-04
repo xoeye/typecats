@@ -8,7 +8,6 @@ mypy = "*"
 pytest = "*"
 pylint = "*"
 pytest-cov = "*"
-pytest-mock = "*"
 typing_extensions = ">=3.7.0"
 
 [packages]

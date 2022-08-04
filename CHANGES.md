@@ -1,11 +1,4 @@
-# v2.0.0rc2
-
-- Adds `typecats.exceptiongroups`: Basic utility functions for working with exception groups
-- Adds `typecats.exceptiongroups.pytest_utils`: `with raises_in_group()` to simplify assertions
-- Fixes \_ispytest being passed in older pytest versions
-- Fix regression in undefined behavior of `Cat.struc({"field": WildCat(...)})`
-
-## v2.0.0rc1
+# v2.0.0
 
 Breaking changes:
 
