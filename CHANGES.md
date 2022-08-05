@@ -1,4 +1,4 @@
-# v2.0.0rc1
+# v2.0.0
 
 Breaking changes:
 

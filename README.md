@@ -94,7 +94,7 @@ features. The 4 core features are:
 
    try:
       TestCat.struc(dict(name='', age=0))
-   except StructuringError as ve:
+   except typecats.StructuringError as ve:
       print(ve)
       # Attribute "name" on class <class 'TestCat'> with type <class 'str'> cannot have empty value ''!
    ```
