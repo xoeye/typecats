@@ -9,7 +9,7 @@ import typing as ty
 
 from attr import has as is_attrs_class
 from cattrs.converters import GenConverter
-from cattrs._compat import has_with_generic
+from cattrs._compat import has_with_generic, get_origin, is_generic
 
 from .wildcat import is_wildcat, enrich_structured_wildcat, enrich_unstructured_wildcat
 from .strip_defaults import ShouldStripDefaults, strip_attrs_defaults
@@ -24,7 +24,8 @@ def structure_wildcat_factory(gen_converter: GenConverter, cls):
     def structure_typecat(dictionary, Type):
         try:
             with _consolidate_exceptions(gen_converter, Type):
-                if is_wildcat(Type) and isinstance(dictionary, Type):
+                core_type = get_origin(Type) if is_generic(Type) else Type
+                if is_wildcat(Type) and isinstance(dictionary, core_type):
                     # Backwards compatibility for Cat.struc({"field": Wildcat(...)}) which worked with
                     # the legacy BaseConverter but no longer works with GenConverter
                     res = gen_converter.structure_attrs_fromdict(dictionary, Type)
