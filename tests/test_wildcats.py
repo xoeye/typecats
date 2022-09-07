@@ -2,7 +2,7 @@ import json
 import typing as ty
 
 import pytest
-from typecats import Cat
+from typecats import Cat, struc
 from typecats.exceptions import StructuringError
 
 from data_utils import ld
@@ -243,3 +243,18 @@ def test_wildcat_struc_with_non_wildcat_does_not_work():
     # Make sure that this particular case only works with wildcats
     with pytest.raises(StructuringError):
         WithNested.struc(dict(nested=Nested(i=6)))
+
+
+def test_wildcat_structure_on_parametrized_generic():
+    # The wildcat.struc(CatObject) compatibility once broke with generics
+    T = ty.TypeVar("T")
+
+    @Cat
+    class TList(dict, ty.Generic[T]):
+        the_list: ty.List[T]
+
+    int_list = struc(TList[int], dict(the_list=[1, 2, 3]))
+    assert int_list.the_list == [1, 2, 3]
+
+    str_list = struc(TList[str], dict(the_list=["a", "b", "c"]))
+    assert str_list.the_list == ["a", "b", "c"]

@@ -1,3 +1,7 @@
+## v2.0.1
+
+- Fixes error in structuring parameterized generic wildcats
+
 # v2.0.0
 
 Breaking changes:
