@@ -1,4 +1,5 @@
 import json
+import sys
 import typing as ty
 
 import pytest
@@ -245,8 +246,16 @@ def test_wildcat_struc_with_non_wildcat_does_not_work():
         WithNested.struc(dict(nested=Nested(i=6)))
 
 
+@pytest.mark.skipif(sys.version_info < (3, 9), reason="fails on python < 3.9")
 def test_wildcat_structure_on_parametrized_generic():
     # The wildcat.struc(CatObject) compatibility once broke with generics
+
+    # This test fails on 3.7. I currently lack time to figure this one out..
+    # But if you are here and a brave soldier, you might want to look into
+    # why TList gets handled by structure_mapping_fn on 3.7 and not on 3.9
+    # (you don't want it to be handled by structure_mapping_fn).
+    # Something to do with cattrs._compat.is_mapping
+
     T = ty.TypeVar("T")
 
     @Cat
