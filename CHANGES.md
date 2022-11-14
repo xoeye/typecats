@@ -1,3 +1,8 @@
+## v2.0.2
+
+- Fixes regression in post cattrs-1.1.2 where attrs objects in `typing.Any` fields are
+  returned as-is and not unstructured
+
 ## v2.0.1
 
 - Fixes error in structuring parameterized generic wildcats
