@@ -58,6 +58,20 @@ def unstructure_strip_defaults_factory(gen_converter: GenConverter, cls: type):
     return unstructure_strip_defaults
 
 
+def _is_any(cl: ty.Type) -> bool:
+    return cl == ty.Any
+
+
+def unstructure_any_from_runtime_type(
+    gen_converter: GenConverter, obj: ty.Any
+) -> ty.Union[ty.Any, dict]:
+    cls = type(obj)
+    if is_attrs_class(cls):
+        return gen_converter.unstructure(obj, cls)
+    else:
+        return gen_converter.unstructure(obj)
+
+
 def patch_converter_for_typecats(converter: GenConverter) -> GenConverter:
     if converter in __patched_converters:
         return converter
@@ -68,6 +82,10 @@ def patch_converter_for_typecats(converter: GenConverter) -> GenConverter:
 
     converter.register_unstructure_hook_factory(
         has_with_generic, partial(unstructure_strip_defaults_factory, converter)
+    )
+
+    converter.register_unstructure_hook_func(
+        _is_any, partial(unstructure_any_from_runtime_type, converter)
     )
 
     __patched_converters.append(converter)
