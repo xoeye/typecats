@@ -117,9 +117,9 @@ def get_default_converter():
     return _TYPECATS_DEFAULT_CONVERTER
 
 
-def register_struc_hook(*args, **kwargs):
+def register_struc_hook(typ, func, **_):
     """Use this to register cattrs structuring hooks on the internal cattrs Converter"""
-    _TYPECATS_DEFAULT_CONVERTER.register_structure_hook(*args, **kwargs)
+    _TYPECATS_DEFAULT_CONVERTER.register_structure_hook_func(lambda t: t == typ, func)
 
 
 def register_unstruc_hook(*args, **kwargs):

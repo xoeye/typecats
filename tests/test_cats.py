@@ -113,3 +113,19 @@ def test_union_structuring():
         Foo.struc(dict(union=dict(a="some_value")))
     except Exception as exc:
         raise AssertionError(f"Exception {repr(exc)} was raised when it should not have been.")
+
+
+
+
+def test_struc_with_typed_dict_registered_hook():
+    from typing_extensions import TypedDict
+    class Foo(TypedDict):
+        bar: int
+
+    register_struc_hook(Foo, lambda x, _: x)
+
+    @Cat
+    class Thing:
+        a: bool
+
+    Thing.struc(dict(a=True))

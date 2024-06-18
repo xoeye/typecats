@@ -1,3 +1,7 @@
+## v2.0.3
+
+- Redefine register_struc_hook in terms of register_struc_hook_func to make it work with TypedDicts
+
 ## v2.0.2
 
 - Fixes regression in post cattrs-1.1.2 where attrs objects in `typing.Any` fields are
