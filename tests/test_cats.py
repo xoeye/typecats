@@ -6,6 +6,7 @@ import pytest
 from typecats import (
     Cat,
     StructuringError,
+    TypecatsConverter,
     register_struc_hook,
     register_unstruc_hook,
     struc,
@@ -113,3 +114,60 @@ def test_union_structuring():
         Foo.struc(dict(union=dict(a="some_value")))
     except Exception as exc:
         raise AssertionError(f"Exception {repr(exc)} was raised when it should not have been.")
+
+
+def test_frozen_cat():
+    @Cat(frozen=True)
+    class FrozenCat:
+        x: str
+        y: int = 0
+
+    fc = FrozenCat("hello")
+    assert fc.x == "hello"
+    assert fc.y == 0
+
+    with pytest.raises(attr.exceptions.FrozenInstanceError):
+        fc.x = "world"  # type: ignore
+
+    # disallow_empties still applies on construction
+    with pytest.raises(ValueError):
+        FrozenCat("")
+
+    # struc/unstruc round-trip works
+    fc2 = FrozenCat.struc({"x": "world", "y": 1})
+    assert fc2.x == "world"
+    assert unstruc(fc2) == {"x": "world", "y": 1}
+
+
+def test_custom_converter():
+    custom = TypecatsConverter()
+
+    @Cat(converter=custom)
+    class WithCustomConverter:
+        value: str
+
+    obj = WithCustomConverter.struc({"value": "hello"})
+    assert obj.value == "hello"
+    assert obj.unstruc() == {"value": "hello"}
+
+    # module-level struc uses the default converter and also works
+    assert struc(WithCustomConverter, {"value": "world"}).value == "world"
+
+
+def test_set_struc_unstruc_converter():
+    from typecats.tc import set_struc_converter, set_unstruc_converter
+
+    @Cat
+    class Switchable:
+        n: int
+
+    original = Switchable.struc({"n": 1})
+    assert original.n == 1
+
+    custom = TypecatsConverter()
+    set_struc_converter(Switchable, custom)
+    set_unstruc_converter(Switchable, custom)
+
+    via_custom = Switchable.struc({"n": 2})
+    assert via_custom.n == 2
+    assert via_custom.unstruc() == {"n": 2}

@@ -82,3 +82,55 @@ def test_decimal_zero():
 
     DecimalZero(0)  # type: ignore
     DecimalZero(Decimal(0))
+
+
+def test_field_transformer_combined_with_disallow_empties():
+    """User-supplied field_transformer and disallow_empties both take effect."""
+    transformer_was_called = []
+
+    def recording_transformer(cls, fields):
+        transformer_was_called.append(cls.__name__)
+        return fields
+
+    @typecats.Cat(field_transformer=recording_transformer)
+    class Recorded:
+        name: str
+        count: int = 0
+
+    assert transformer_was_called == ["Recorded"]
+
+    # disallow_empties still fires
+    with pytest.raises(ValueError):
+        Recorded("")
+
+    Recorded("ok")
+
+
+def test_field_transformer_can_modify_fields():
+    """User-supplied field_transformer modifications take effect alongside disallow_empties."""
+
+    def add_length_validator(cls, fields):
+        result = []
+        for field in fields:
+            if field.name == "code":
+                existing = field.validator
+                def exact_length(self, attribute, value, _existing=existing):
+                    if _existing:
+                        _existing(self, attribute, value)
+                    if len(value) != 3:
+                        raise ValueError(f"{attribute.name} must be 3 characters")
+                field = field.evolve(validator=exact_length)
+            result.append(field)
+        return result
+
+    @typecats.Cat(field_transformer=add_length_validator)
+    class WithCode:
+        code: str
+
+    with pytest.raises(ValueError):
+        WithCode("")  # fails nonempty (injected before user transformer)
+
+    with pytest.raises(ValueError):
+        WithCode("ab")  # fails length (injected by user transformer)
+
+    WithCode("abc")
