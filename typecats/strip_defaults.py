@@ -5,7 +5,7 @@ import contextvars as cv
 import attr
 from attr import has as is_attrs_class
 
-from ._compat import Literal
+from typing import Literal
 
 
 ShouldStripDefaults = cv.ContextVar("TypecatsShouldStripDefaults", default=False)

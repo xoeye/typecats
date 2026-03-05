@@ -2,8 +2,8 @@ import typing as ty
 
 from attr import Factory as fac
 from typecats import Cat, unstruc
-from typecats._compat import Protocol
-from typecats.patch import is_attrs_class
+from typing import Protocol
+from attr import has as is_attrs_class
 
 
 class IdMessage(Protocol):

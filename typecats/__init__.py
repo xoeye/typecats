@@ -1,21 +1,33 @@
-from .tc import (  # noqa
+from .__version__ import __version__
+from .converter import TypecatsConverter
+from .exceptions import StructuringError
+from .tc import (
     Cat,
-    unstruc,
+    register_struc_hook,
+    register_struc_hook_func,
+    register_unstruc_hook,
+    register_unstruc_hook_func,
+    set_detailed_validation_mode_not_threadsafe,
     struc,
     try_struc,
-    register_struc_hook,
-    register_unstruc_hook,
-    register_struc_hook_func,
-    register_unstruc_hook_func,
+    unstruc,
     unstruc_strip_defaults,
-    set_detailed_validation_mode_not_threadsafe,
 )
+from .wildcat import is_wildcat
 
-from .exceptions import StructuringError  # noqa
-
-from .wildcat import is_wildcat  # noqa
-from .patch import patch_converter_for_typecats  # noqa
-
-from .__about__ import __version__
-
-__all__ = [__version__]
+__all__ = [
+    "Cat",
+    "StructuringError",
+    "TypecatsConverter",
+    "__version__",
+    "is_wildcat",
+    "register_struc_hook",
+    "register_struc_hook_func",
+    "register_unstruc_hook",
+    "register_unstruc_hook_func",
+    "set_detailed_validation_mode_not_threadsafe",
+    "struc",
+    "try_struc",
+    "unstruc",
+    "unstruc_strip_defaults",
+]

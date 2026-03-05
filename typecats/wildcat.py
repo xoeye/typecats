@@ -4,7 +4,7 @@ import typing as ty
 import logging
 
 from attr import has as is_attrs_class
-from cattr.converters import Converter
+from cattrs import Converter
 from .attrs_shim import get_attrs_names
 
 
@@ -16,7 +16,7 @@ WC = ty.TypeVar("WC", bound=ty.Mapping)
 
 
 def is_wildcat(cls: type) -> bool:
-    return is_attrs_class(cls) and dict in cls.__mro__
+    return is_attrs_class(cls) and dict in getattr(cls, "__mro__", ())
 
 
 def enrich_structured_wildcat(

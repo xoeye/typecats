@@ -4,7 +4,7 @@ import attr
 from attr import Factory as fac
 
 from typecats import Cat, unstruc_strip_defaults
-from typecats._compat import Literal
+from typing import Literal
 
 
 def test_clean_cats_basic():
