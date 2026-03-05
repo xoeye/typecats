@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from mypy.plugin import ClassDefContext, Plugin
 from mypy.plugins.common import add_method
-from mypy.nodes import ARG_NAMED_OPT, ARG_POS, Argument, Var
+from mypy.nodes import ARG_POS, Argument, Var
 from mypy.types import AnyType, Instance, NoneType, TypeOfAny, UnionType
 
 _CAT_FULLNAMES = frozenset({
@@ -28,13 +28,11 @@ _CAT_FULLNAMES = frozenset({
 
 def _add_cat_methods(ctx: ClassDefContext) -> None:
     any_type = AnyType(TypeOfAny.special_form)
-    bool_type = ctx.api.named_type("builtins.bool")
     str_type = ctx.api.named_type("builtins.str")
     dict_type = ctx.api.named_type("builtins.dict", [str_type, any_type])
     cls_type = Instance(ctx.cls.info, [])
 
     d_arg = Argument(Var("d", any_type), any_type, None, ARG_POS)
-    sd_arg = Argument(Var("strip_defaults", bool_type), bool_type, None, ARG_NAMED_OPT)
 
     # struc(d: Any) -> <Class>
     add_method(ctx, "struc", args=[d_arg], return_type=cls_type, is_classmethod=True)
@@ -48,8 +46,8 @@ def _add_cat_methods(ctx: ClassDefContext) -> None:
         is_classmethod=True,
     )
 
-    # unstruc(self, *, strip_defaults: bool = False) -> dict[str, Any]
-    add_method(ctx, "unstruc", args=[sd_arg], return_type=dict_type)
+    # unstruc(self) -> dict[str, Any]
+    add_method(ctx, "unstruc", args=[], return_type=dict_type)
 
 
 class TypecatsPlugin(Plugin):
