@@ -3,6 +3,7 @@ from .converter import TypecatsConverter
 from .exceptions import StructuringError
 from .tc import (
     Cat,
+    TypeCat,
     register_struc_hook,
     register_struc_hook_func,
     register_unstruc_hook,
@@ -18,6 +19,7 @@ from .wildcat import is_wildcat
 __all__ = [
     "Cat",
     "StructuringError",
+    "TypeCat",
     "TypecatsConverter",
     "__version__",
     "is_wildcat",

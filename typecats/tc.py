@@ -1,4 +1,5 @@
 """Utilities for using attrs types with cattrs"""
+
 import typing as ty
 
 import attr
@@ -21,28 +22,20 @@ from .exceptions import (
 from .strip_defaults import ShouldStripDefaults
 from .stack_context import stack_context
 
-
 class TypeCat:
-    """This is mostly just an example of the interface presented by a
-    Cat-annotated class - it is unused within typecats itself.
+    """Base class that documents the interface added by the @Cat decorator.
 
-    You could use this base class to make PyLint happier with the Cat
-    decorator, which it doesn't understand. It's probably cleaner to
-    just tell Pylint not to worry about it, by ignoring generated
-    methods with these names.
-
+    Type checkers understand @Cat through dataclass_transform and the typecats
+    mypy plugin, so inheriting from this is not required. It exists for
+    environments that don't run a type checker (e.g. pylint), or as an
+    explicit documentation aid.
     """
 
-    @staticmethod
-    def struc(_d: StrucInput) -> ty.Any:
-        return TypeCat()  # this is a lie - don't worry about it
-
-    @staticmethod
-    def try_struc(_d: ty.Optional[StrucInput]) -> ty.Any:
-        return TypeCat()
-
-    def unstruc(self) -> UnstrucOutput:
-        return unstruc(self)
+    @classmethod
+    def struc(cls, d: StrucInput) -> ty.Self: ...
+    @classmethod
+    def try_struc(cls, d: ty.Optional[StrucInput]) -> ty.Optional[ty.Self]: ...
+    def unstruc(self, *, strip_defaults: bool = False) -> dict[str, ty.Any]: ...
 
 
 _TYPECATS_DEFAULT_CONVERTER = TypecatsConverter()
@@ -115,6 +108,13 @@ def set_detailed_validation_mode_not_threadsafe(enabled=True):
     _TYPECATS_DEFAULT_CONVERTER._structure_func.clear_cache()
 
 
+@ty.dataclass_transform(
+    eq_default=True,
+    order_default=False,
+    frozen_default=False,
+    kw_only_default=False,
+    field_specifiers=(attr.attrib, attr.ib, attr.field),
+)
 def Cat(
     maybe_cls=None,
     auto_attribs=True,
@@ -216,9 +216,7 @@ def set_struc_converter(
     setattr(cls, TRY_STRUCTURE_NAME, staticmethod(try_struc_cat))
 
 
-def set_unstruc_converter(
-    cls: ty.Type[C], converter: cattrs.Converter = _TYPECATS_DEFAULT_CONVERTER
-):
+def set_unstruc_converter(cls: ty.Type[C], converter: cattrs.Converter = _TYPECATS_DEFAULT_CONVERTER):
     """If you want to change your mind about the built-in Converter that
     is meant to run when you call the object method YourCatObj.unstruc(), you
     can reset it here. By default, it is defined by the converter

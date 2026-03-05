@@ -52,7 +52,3 @@ def get_attrs_names(Type: type) -> ty.Set[str]:
     return {a.name for a in attrs_attrs}
 
 
-def drop_nonattrs(d: dict, Type: type) -> dict:
-    """Gets rid of all members of the dictionary that wouldn't fit in the given attrs Type."""
-    attrs = get_attrs_names(Type)
-    return {key: val for key, val in d.items() if key in attrs}
