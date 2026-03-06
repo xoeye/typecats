@@ -482,6 +482,35 @@ def test_module_struc_and_class_struc_are_equivalent():
     assert via_module == via_class
 
 
+def test_cat_attrs_shim():
+    from typecats.attrs_shim import cat_attrs
+
+    @cat_attrs
+    class Foo:
+        name: str
+        count: int = 0
+
+    obj = Foo("hello")
+    assert obj.name == "hello"
+    assert obj.count == 0
+
+    with pytest.raises(ValueError):
+        Foo("")
+
+
+def test_drop_nonattrs_shim():
+    from typecats.attrs_shim import drop_nonattrs
+
+    @Cat
+    class Foo:
+        name: str
+        count: int = 0
+
+    result = drop_nonattrs({"name": "hello", "count": 1, "extra": "ignored"}, Foo)
+    assert result == {"name": "hello", "count": 1}
+    assert "extra" not in result
+
+
 def test_module_unstruc_and_method_unstruc_are_equivalent():
     @Cat
     class Thing:
