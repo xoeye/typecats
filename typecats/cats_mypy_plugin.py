@@ -1,4 +1,5 @@
 """A Plugin for MyPy that helps it understand the Cats wrapper around attrs and cattrs"""
+
 # flake8: noqa
 # pylint: skip-file
 # pylint: disable=import-error
@@ -32,7 +33,6 @@ from mypy.semanal import set_callable_name
 from mypy.plugin import Plugin, ClassDefContext
 from mypy.plugins.attrs import attr_class_maker_callback
 from mypy.plugins.common import add_method
-
 
 CAT_PATH = "typecats.tc.Cat"
 STRUCTURE_NAME = "struc"
@@ -146,7 +146,9 @@ class CatsPlugin(Plugin):
         return None
 
 
-def serialize_info_name(info: TypeInfo, name: str, class_path: str) -> ty.Dict[str, ty.Any]:
+def serialize_info_name(
+    info: TypeInfo, name: str, class_path: str
+) -> ty.Dict[str, ty.Any]:
     slzed = info.names[name].serialize(class_path, name)
     return slzed
 
@@ -155,7 +157,9 @@ def deserialize_funcdefs(stmts):
     return [FuncDef.deserialize(stmt) for stmt in stmts if stmt[".class"] == "FuncDef"]
 
 
-def add_static_method(ctx, function_name: str, args: ty.List[Argument], return_type: Type) -> None:
+def add_static_method(
+    ctx, function_name: str, args: ty.List[Argument], return_type: Type
+) -> None:
     """Mostly copied from mypy.plugins.common, with changes to make it work for a static method."""
     info = ctx.cls.info
     function_type = ctx.api.named_type("builtins.function")
@@ -167,7 +171,9 @@ def add_static_method(ctx, function_name: str, args: ty.List[Argument], return_t
         arg_names.append(nameit(arg.variable))
         arg_kinds.append(arg.kind)
 
-    signature = CallableType(arg_types, arg_kinds, arg_names, return_type, function_type)
+    signature = CallableType(
+        arg_types, arg_kinds, arg_names, return_type, function_type
+    )
 
     func = FuncDef(function_name, args, Block([PassStmt()]))
     func.is_static = True

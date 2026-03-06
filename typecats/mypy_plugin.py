@@ -13,6 +13,7 @@ Or to mypy.ini:
     [mypy]
     plugins = typecats.mypy_plugin
 """
+
 from __future__ import annotations
 
 from mypy.plugin import ClassDefContext, Plugin
@@ -20,10 +21,12 @@ from mypy.plugins.common import add_method
 from mypy.nodes import ARG_POS, Argument, Var
 from mypy.types import AnyType, Instance, NoneType, TypeOfAny, UnionType
 
-_CAT_FULLNAMES = frozenset({
-    "typecats.Cat",
-    "typecats.tc.Cat",
-})
+_CAT_FULLNAMES = frozenset(
+    {
+        "typecats.Cat",
+        "typecats.tc.Cat",
+    }
+)
 
 
 def _add_cat_methods(ctx: ClassDefContext) -> None:

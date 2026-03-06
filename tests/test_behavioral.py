@@ -3,13 +3,13 @@
 These tests cover the observable contract of the library, independent of
 implementation details. They should produce the same results across versions.
 """
+
 import typing as ty
 from decimal import Decimal
 
 import attr
 import pytest
 from typecats import Cat, StructuringError, struc, try_struc, unstruc
-
 
 # ---------------------------------------------------------------------------
 # disallow_empties — collection types

@@ -1,4 +1,5 @@
 """Shim for attrs to make `Cat`s possible."""
+
 from __future__ import annotations
 
 import typing as ty
@@ -11,7 +12,9 @@ _SCALAR_TYPES_WITH_NO_EMPTY_VALUES = (bool, float, int, Decimal)
 FieldTransformer = ty.Callable[[type, list[attr.Attribute]], list[attr.Attribute]]
 
 
-def nonempty_validator(self: ty.Any, attribute: attr.Attribute[ty.Any], value: ty.Any) -> None:
+def nonempty_validator(
+    self: ty.Any, attribute: attr.Attribute[ty.Any], value: ty.Any
+) -> None:
     """Don't allow strings and collections without attr defaults to have empty/False-y values."""
     if attribute.type in _SCALAR_TYPES_WITH_NO_EMPTY_VALUES:
         return
@@ -29,7 +32,9 @@ def make_disallow_empties_transformer(
 ) -> FieldTransformer:
     """Returns a field_transformer that optionally injects nonempty validators on required fields."""
 
-    def transformer(cls: type, fields: list[attr.Attribute[ty.Any]]) -> list[attr.Attribute[ty.Any]]:
+    def transformer(
+        cls: type, fields: list[attr.Attribute[ty.Any]]
+    ) -> list[attr.Attribute[ty.Any]]:
         result = []
         for field in fields:
             if (
@@ -64,7 +69,12 @@ def drop_nonattrs(d: dict[str, ty.Any], Type: type) -> dict[str, ty.Any]:
     return {key: val for key, val in d.items() if key in attrs}
 
 
-def cat_attrs(cls: type, auto_attribs: bool = True, disallow_empties: bool = True, **kwargs: ty.Any) -> type:
+def cat_attrs(
+    cls: type,
+    auto_attribs: bool = True,
+    disallow_empties: bool = True,
+    **kwargs: ty.Any,
+) -> type:
     """Compatibility shim. Prefer using the @Cat decorator instead."""
     return attr.attrs(
         cls,
@@ -72,5 +82,3 @@ def cat_attrs(cls: type, auto_attribs: bool = True, disallow_empties: bool = Tru
         field_transformer=make_disallow_empties_transformer(disallow_empties),
         **kwargs,
     )
-
-

@@ -12,7 +12,7 @@ from .wildcat import (
     setup_warnings_for_dangerous_dict_subclass_operations,
     is_wildcat,
 )
-from .types import C, StrucInput, UnstrucOutput
+from .types import C, StrucInput
 from .exceptions import (
     _extract_typecats_stack_if_any,
     _emit_exception_to_default_handler,
@@ -21,6 +21,7 @@ from .exceptions import (
 )
 from .strip_defaults import ShouldStripDefaults
 from .stack_context import stack_context
+
 
 class TypeCat:
     """Base class that documents the interface added by the @Cat decorator.
@@ -46,7 +47,9 @@ def struc(cl: ty.Type[C], obj: StrucInput) -> C:
     try:
         return _TYPECATS_DEFAULT_CONVERTER.structure(obj, cl)
     except StructuringError as e:
-        _emit_exception_to_default_handler(e, obj, cl, _extract_typecats_stack_if_any(e))
+        _emit_exception_to_default_handler(
+            e, obj, cl, _extract_typecats_stack_if_any(e)
+        )
         raise e
 
 
@@ -65,7 +68,9 @@ def _try_struc(
     except StructuringError:
         return None
     except Exception as e:
-        _emit_exception_to_default_handler(e, obj, cl, _extract_typecats_stack_if_any(e))
+        _emit_exception_to_default_handler(
+            e, obj, cl, _extract_typecats_stack_if_any(e)
+        )
         return None
 
 
@@ -158,7 +163,9 @@ def Cat(
         cls = attr.attrs(
             cls,
             auto_attribs=auto_attribs,
-            field_transformer=make_disallow_empties_transformer(disallow_empties, user_transformer),
+            field_transformer=make_disallow_empties_transformer(
+                disallow_empties, user_transformer
+            ),
             **{k: v for k, v in kwargs.items() if k != "field_transformer"},
         )
         if is_wildcat(cls):
@@ -209,14 +216,18 @@ def set_struc_converter(
         except StructuringError:
             return None
         except Exception as e:
-            _emit_exception_to_default_handler(e, d, cls, _extract_typecats_stack_if_any(e))
+            _emit_exception_to_default_handler(
+                e, d, cls, _extract_typecats_stack_if_any(e)
+            )
             return None
 
     setattr(cls, STRUCTURE_NAME, staticmethod(struc_cat))
     setattr(cls, TRY_STRUCTURE_NAME, staticmethod(try_struc_cat))
 
 
-def set_unstruc_converter(cls: ty.Type[C], converter: cattrs.Converter = _TYPECATS_DEFAULT_CONVERTER):
+def set_unstruc_converter(
+    cls: ty.Type[C], converter: cattrs.Converter = _TYPECATS_DEFAULT_CONVERTER
+):
     """If you want to change your mind about the built-in Converter that
     is meant to run when you call the object method YourCatObj.unstruc(), you
     can reset it here. By default, it is defined by the converter

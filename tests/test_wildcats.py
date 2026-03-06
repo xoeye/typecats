@@ -58,7 +58,7 @@ def test_wildcats():
         wrapped.wildcat["adjust"] = 88
 
     wc = MyWildcat.struc(dwc)
-    assert type(wc) == MyWildcat
+    assert isinstance(wc, MyWildcat)
     print(wc)
     wc["favorite_color"] = "green"
     print(wc)

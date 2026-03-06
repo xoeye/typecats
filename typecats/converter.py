@@ -1,4 +1,5 @@
 """TypecatsConverter: a GenConverter subclass with wildcat, strip_defaults, and typing.Any support."""
+
 import typing as ty
 
 from attr import has as is_attrs_class
@@ -69,7 +70,13 @@ class TypecatsConverter(GenConverter):
 
         return unstructure_with_extras
 
-    def unstructure(self, obj: ty.Any, unstructure_as: ty.Any = None, *, strip_defaults: bool = False) -> ty.Any:
+    def unstructure(
+        self,
+        obj: ty.Any,
+        unstructure_as: ty.Any = None,
+        *,
+        strip_defaults: bool = False,
+    ) -> ty.Any:
         if strip_defaults:
             with stack_context(ShouldStripDefaults, True):
                 return super().unstructure(obj, unstructure_as)

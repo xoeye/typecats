@@ -8,8 +8,7 @@ from attr import has as is_attrs_class
 
 class IdMessage(Protocol):
     @property
-    def id(self) -> str:
-        ...
+    def id(self) -> str: ...
 
 
 M = ty.TypeVar("M", bound=IdMessage, contravariant=True)

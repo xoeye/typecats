@@ -114,11 +114,13 @@ def test_field_transformer_can_modify_fields():
         for field in fields:
             if field.name == "code":
                 existing = field.validator
+
                 def exact_length(self, attribute, value, _existing=existing):
                     if _existing:
                         _existing(self, attribute, value)
                     if len(value) != 3:
                         raise ValueError(f"{attribute.name} must be 3 characters")
+
                 field = field.evolve(validator=exact_length)
             result.append(field)
         return result
