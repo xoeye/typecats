@@ -21,9 +21,9 @@ def _get_factory_default(_attr: attr.Attribute[ty.Any]) -> ty.Any:
 
 
 def _get_attr_default_value(attribute: attr.Attribute[ty.Any]) -> ty.Any:
-    if not isinstance(attribute.default, attr.Factory):  # type: ignore[misc]
-        return attribute.default
-    return _get_factory_default(attribute)
+    if hasattr(attribute.default, "factory"):
+        return _get_factory_default(attribute)
+    return attribute.default
 
 
 def _get_names_of_defaulted_nonliteral_attrs(attrs_obj: ty.Any) -> set[str]:

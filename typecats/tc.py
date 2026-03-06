@@ -33,10 +33,15 @@ class TypeCat:
     """
 
     @classmethod
-    def struc(cls, d: StrucInput) -> ty.Self: ...
+    def struc(cls, d: StrucInput) -> ty.Self:
+        raise NotImplementedError
+
     @classmethod
-    def try_struc(cls, d: ty.Optional[StrucInput]) -> ty.Optional[ty.Self]: ...
-    def unstruc(self) -> dict[str, ty.Any]: ...
+    def try_struc(cls, d: ty.Optional[StrucInput]) -> ty.Optional[ty.Self]:
+        raise NotImplementedError
+
+    def unstruc(self) -> dict[str, ty.Any]:
+        raise NotImplementedError
 
 
 _TYPECATS_DEFAULT_CONVERTER = TypecatsConverter()

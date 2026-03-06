@@ -12,7 +12,7 @@ Breaking changes:
 New features:
 
 - `@typing.dataclass_transform` added to `Cat` — mypy and pyright now understand constructor signatures and field types on all `@Cat`-decorated classes
-- Mypy plugin (`typecats.mypy_plugin`) adds `.struc()`, `.try_struc()`, and `.unstruc()` method signatures to `@Cat` classes; enable with `plugins = ["typecats.mypy_plugin"]` in your mypy config
+- Mypy plugin (`typecats.cats_mypy_plugin`) adds `.struc()`, `.try_struc()`, and `.unstruc()` method signatures to `@Cat` classes; enable with `plugins = ["typecats.cats_mypy_plugin"]` in your mypy config
 - `TypecatsConverter` is now a public export
 - `TypeCat` is now a public export
 - `set_default_exception_hook` is now a public export
