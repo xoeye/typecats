@@ -37,6 +37,7 @@ repos:
         entry: uv run pylint
         language: system
         types: [python]
+        files: ^typecats/
         args:
           - --fail-under=8.5
 
