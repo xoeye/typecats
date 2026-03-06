@@ -67,7 +67,7 @@ def _try_struc(
     cl: ty.Type[C],
     obj: ty.Optional[StrucInput],
 ) -> ty.Optional[C]:
-    """A wrapper for cattrs structure that suppresses and logs structure exceptions."""
+    """A wrapper for cattrs structure that suppresses StructuringErrors and logs unexpected exceptions."""
     try:
         return struc(cl, obj)  # type: ignore
     except StructuringError:
@@ -129,7 +129,7 @@ def Cat(
     maybe_cls=None,
     auto_attribs=True,
     disallow_empties=True,
-    converter: cattrs.Converter = _TYPECATS_DEFAULT_CONVERTER,
+    converter: TypecatsConverter = _TYPECATS_DEFAULT_CONVERTER,
     **kwargs,
 ):
     """A Cat knows how to take care of itself.
@@ -150,16 +150,11 @@ def Cat(
     off this behavior with the pedestrianly-named boolean flag
     'disallow_empties=False'.
 
-    Note that each defined Cat type has a 'built-in' cattrs Converter
+    Note that each defined Cat type has a 'built-in' TypecatsConverter
     that gets used when you call the static or object methods `struc`,
     `try_struc`, or `unstruc`. By default, this is the typecats
-    default Converter.  You may choose to specify your own Converter
-    at the time of defining your Cat type via the `converter` keyword
-    argument.
-
-    However, any Cat type should work with any cattrs Converter
-    directly, (i.e. `your_converter.structure(your_data, YourCatType)`)
-    as long as that Converter is a TypecatsConverter.
+    default Converter. You may supply your own TypecatsConverter instance
+    via the `converter` keyword argument.
 
     """
 
@@ -238,7 +233,14 @@ def set_unstruc_converter(
     can reset it here. By default, it is defined by the converter
     keyword argument on the Cat decorator.
 
+    The converter must be a TypecatsConverter; strip_defaults behavior
+    relies on the ShouldStripDefaults context var being honored during
+    unstructuring, which is only guaranteed for TypecatsConverter.
     """
+    if not isinstance(converter, TypecatsConverter):
+        raise TypeError(
+            f"set_unstruc_converter requires a TypecatsConverter; got {type(converter)}"
+        )
 
     def _unstruc(obj, *, strip_defaults: bool = False):
         with stack_context(ShouldStripDefaults, strip_defaults):

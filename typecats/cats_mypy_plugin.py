@@ -48,21 +48,26 @@ def _add_cat_methods(ctx: ClassDefContext) -> None:
     str_type = ctx.api.named_type("builtins.str")
     bool_type = ctx.api.named_type("builtins.bool")
     dict_type = ctx.api.named_type("builtins.dict", [str_type, any_type])
+    mapping_type = ctx.api.named_type("collections.abc.Mapping", [str_type, any_type])
+    optional_mapping_type = UnionType([mapping_type, NoneType()])
     cls_type = fill_typevars(ctx.cls.info)
 
-    d_arg = Argument(Var("d", any_type), any_type, None, ARG_POS)
+    d_arg = Argument(Var("d", mapping_type), mapping_type, None, ARG_POS)
+    d_opt_arg = Argument(
+        Var("d", optional_mapping_type), optional_mapping_type, None, ARG_POS
+    )
     strip_arg = Argument(
         Var("strip_defaults", bool_type), bool_type, None, ARG_NAMED_OPT
     )
 
-    # struc(d: Any) -> <Class>
+    # struc(d: Mapping[str, Any]) -> <Class>
     add_method(ctx, "struc", args=[d_arg], return_type=cls_type, is_classmethod=True)
 
-    # try_struc(d: Any) -> Optional[<Class>]
+    # try_struc(d: Mapping[str, Any] | None) -> <Class> | None
     add_method(
         ctx,
         "try_struc",
-        args=[d_arg],
+        args=[d_opt_arg],
         return_type=UnionType([cls_type, NoneType()]),
         is_classmethod=True,
     )
