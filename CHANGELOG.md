@@ -5,7 +5,7 @@
 Breaking changes:
 
 - Requires Python >=3.12
-- Upgrades `attrs` to >=25.4.0 and `cattrs` to >=26.1.0
+- Requires `attrs >=21.4.0,<26.0.0` and `cattrs >=22.1.0,<27.0.0`
 - `patch_converter_for_typecats` removed; use `TypecatsConverter()` directly
 - `_compat.py` removed (was dead code on Python 3.12+)
 
