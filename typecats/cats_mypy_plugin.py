@@ -19,12 +19,17 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import override
 
-from mypy.nodes import ARG_POS, Argument, Var  # pylint: disable=no-name-in-module
+from mypy.nodes import (  # pylint: disable=no-name-in-module
+    ARG_NAMED_OPT,
+    ARG_POS,
+    Argument,
+    Var,
+)
 from mypy.plugin import ClassDefContext, Plugin  # pylint: disable=no-name-in-module
 from mypy.plugins.common import add_method  # pylint: disable=no-name-in-module
+from mypy.typeops import fill_typevars  # pylint: disable=no-name-in-module
 from mypy.types import (  # pylint: disable=no-name-in-module
     AnyType,
-    Instance,
     NoneType,
     TypeOfAny,
     UnionType,
@@ -41,10 +46,14 @@ _CAT_FULLNAMES = frozenset(
 def _add_cat_methods(ctx: ClassDefContext) -> None:
     any_type = AnyType(TypeOfAny.special_form)
     str_type = ctx.api.named_type("builtins.str")
+    bool_type = ctx.api.named_type("builtins.bool")
     dict_type = ctx.api.named_type("builtins.dict", [str_type, any_type])
-    cls_type = Instance(ctx.cls.info, [])
+    cls_type = fill_typevars(ctx.cls.info)
 
     d_arg = Argument(Var("d", any_type), any_type, None, ARG_POS)
+    strip_arg = Argument(
+        Var("strip_defaults", bool_type), bool_type, None, ARG_NAMED_OPT
+    )
 
     # struc(d: Any) -> <Class>
     add_method(ctx, "struc", args=[d_arg], return_type=cls_type, is_classmethod=True)
@@ -58,8 +67,8 @@ def _add_cat_methods(ctx: ClassDefContext) -> None:
         is_classmethod=True,
     )
 
-    # unstruc(self) -> dict[str, Any]
-    add_method(ctx, "unstruc", args=[], return_type=dict_type)
+    # unstruc(self, *, strip_defaults: bool = False) -> dict[str, Any]
+    add_method(ctx, "unstruc", args=[strip_arg], return_type=dict_type)
 
 
 class TypecatsPlugin(Plugin):  # pylint: disable=too-few-public-methods

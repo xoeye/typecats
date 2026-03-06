@@ -15,7 +15,8 @@ WC = ty.TypeVar("WC", bound=ty.Mapping)
 
 
 def is_wildcat(cls: type) -> bool:
-    return is_attrs_class(cls) and dict in getattr(cls, "__mro__", ())
+    core = ty.get_origin(cls) or cls
+    return is_attrs_class(core) and dict in getattr(core, "__mro__", ())
 
 
 def enrich_structured_wildcat(

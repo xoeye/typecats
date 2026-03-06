@@ -12,7 +12,8 @@ from .stack_context import stack_context
 
 
 def _has_with_generic(cls) -> bool:
-    return is_attrs_class(cls) or is_attrs_class(ty.get_origin(cls))
+    origin = ty.get_origin(cls)
+    return is_attrs_class(cls) or (origin is not None and is_attrs_class(origin))
 
 
 class TypecatsConverter(GenConverter):

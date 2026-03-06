@@ -40,7 +40,7 @@ class TypeCat:
     def try_struc(cls, d: ty.Optional[StrucInput]) -> ty.Optional[ty.Self]:
         raise NotImplementedError
 
-    def unstruc(self) -> dict[str, ty.Any]:
+    def unstruc(self, *, strip_defaults: bool = False) -> dict[str, ty.Any]:
         raise NotImplementedError
 
 
