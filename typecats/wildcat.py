@@ -1,5 +1,4 @@
 """Implements some nice-to-haves for the 'Wildcat' concept of structurable dynamic Class properties."""
-# pylint: disable=protected-access
 import typing as ty
 import logging
 

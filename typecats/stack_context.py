@@ -6,7 +6,7 @@ T = ty.TypeVar("T")
 
 
 @cl.contextmanager
-def stack_context(contextvar: cv.ContextVar[T], value: T) -> ty.Iterator:
+def stack_context(contextvar: cv.ContextVar[T], value: T) -> ty.Iterator[None]:
     try:
         token = contextvar.set(value)
         yield

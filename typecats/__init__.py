@@ -1,6 +1,6 @@
 from .__version__ import __version__
 from .converter import TypecatsConverter
-from .exceptions import StructuringError
+from .exceptions import StructuringError, set_default_exception_hook
 from .tc import (
     Cat,
     TypeCat,
@@ -19,6 +19,7 @@ from .wildcat import is_wildcat
 __all__ = [
     "Cat",
     "StructuringError",
+    "set_default_exception_hook",
     "TypeCat",
     "TypecatsConverter",
     "__version__",
