@@ -24,8 +24,12 @@ Other changes:
 - Replaced converter patching with a clean `TypecatsConverter(GenConverter)` subclass
 - Type annotations added throughout the library
 - `assert` in `strip_defaults.py` replaced with a proper `TypeError`
-- CI updated to use uv and test against Python 3.12, 3.13, and 3.14
+- CI updated to use uv, uv caching, and test against Python 3.12, 3.13, and 3.14
 - `pyproject.toml` updated with license, readme, classifiers, and project URLs
+- `TypeCat.unstruc` signature now includes `strip_defaults: bool = False` to match the injected runtime implementation
+- Mypy plugin `unstruc` signature now includes `strip_defaults` and uses `fill_typevars` so generic `@Cat` classes return properly parameterized types
+- `_has_with_generic` in `TypecatsConverter` now guards against `typing.get_origin()` returning `None`
+- `is_wildcat` now normalizes parameterized generics via `typing.get_origin()` before checking attrs/mro
 
 ## v2.0.2
 
