@@ -46,9 +46,8 @@ repos:
         entry: uv run mypy
         language: system
         types: [python]
-        pass_filenames: false
+        files: ^typecats/
         args:
           - --show-traceback
           - --ignore-missing-imports
           - --check-untyped-defs
-          - typecats
