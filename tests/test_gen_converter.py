@@ -1,8 +1,8 @@
 import typing as ty
 
 from attr import Factory as fac
-from typecats import Cat, unstruc
-from typing import Protocol
+from typecats import Cat, struc, unstruc
+from typing import Optional, Protocol
 from attr import has as is_attrs_class
 
 
@@ -34,6 +34,25 @@ def test_generic_typevar_unstructure():
 
 
 T = ty.TypeVar("T")
+
+
+def test_unstruc_coerces_pre_unstructured_dict_in_typed_field():
+    """A plain dict stored in an attrs-typed field is structured into the expected
+    type before unstructuring, matching pydantic's coercion behavior."""
+
+    @Cat
+    class Inner:
+        value: str
+
+    @Cat
+    class Outer:
+        inner: Optional[Inner] = None
+
+    pre_unstructured = {"value": "hello"}
+    outer = struc(Outer, {"inner": pre_unstructured})
+    outer.inner = pre_unstructured  # type: ignore[assignment] — deliberate misuse
+
+    assert unstruc(outer) == {"inner": {"value": "hello"}}
 
 
 def test_generic_with_unstruc_strip_defaults():

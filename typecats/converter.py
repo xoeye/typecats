@@ -60,8 +60,13 @@ class TypecatsConverter(GenConverter):
 
     def gen_unstructure_attrs_fromdict(self, cls):
         base = super().gen_unstructure_attrs_fromdict(cls)
+        core_cls = ty.get_origin(cls) or cls
 
         def unstructure_with_extras(obj):
+            if isinstance(obj, dict) and not is_attrs_class(type(obj)):
+                # obj is a plain dict stored in an attrs-typed field — structure it
+                # into the expected type first, mirroring pydantic's coercion behavior.
+                obj = self.structure(obj, core_cls)
             res = base(obj)
             if ShouldStripDefaults.get():
                 res = strip_attrs_defaults(res, obj)
