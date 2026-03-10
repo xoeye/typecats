@@ -55,6 +55,53 @@ def test_unstruc_coerces_pre_unstructured_dict_in_typed_field():
     assert unstruc(outer) == {"inner": {"value": "hello"}}
 
 
+def test_sibling_cats_unstructure_correctly():
+    """Two sibling @Cat classes as Optional fields on a parent should each
+    unstructure using their own generated hook, not each other's."""
+    from typing import Set
+
+    @Cat
+    class NumberEntry:
+        is_required: bool = False
+        value: Optional[float] = None
+        unit: str = ""
+        unit_options: Set[str] = fac(set)
+        unit_type: str = ""
+
+    @Cat
+    class TextEntry:
+        is_required: bool = False
+        value: str = ""
+        max_length: int = 80
+
+    @Cat
+    class Document:
+        number: Optional[NumberEntry] = None
+        text: Optional[TextEntry] = None
+
+    doc = Document(
+        number=NumberEntry(value=3.14, unit="kg"),
+        text=TextEntry(value="hello", max_length=100),
+    )
+
+    result = unstruc(doc)
+
+    assert result == {
+        "number": {
+            "is_required": False,
+            "value": 3.14,
+            "unit": "kg",
+            "unit_options": set(),
+            "unit_type": "",
+        },
+        "text": {
+            "is_required": False,
+            "value": "hello",
+            "max_length": 100,
+        },
+    }
+
+
 def test_generic_with_unstruc_strip_defaults():
     @Cat
     class Tee:
