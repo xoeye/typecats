@@ -12,6 +12,21 @@ _SCALAR_TYPES_WITH_NO_EMPTY_VALUES = (bool, float, int, Decimal)
 FieldTransformer = ty.Callable[[type, list[attr.Attribute]], list[attr.Attribute]]
 
 
+def cat_attrs(
+    cls: type,
+    auto_attribs: bool = True,
+    disallow_empties: bool = True,
+    **kwargs: ty.Any,
+) -> type:
+    """Compatibility shim. Prefer using the @Cat decorator instead."""
+    return attr.attrs(
+        cls,
+        auto_attribs=auto_attribs,
+        field_transformer=make_disallow_empties_transformer(disallow_empties),
+        **kwargs,
+    )
+
+
 def nonempty_validator(
     self: ty.Any, attribute: attr.Attribute[ty.Any], value: ty.Any
 ) -> None:
@@ -67,18 +82,3 @@ def drop_nonattrs(d: dict[str, ty.Any], Type: type) -> dict[str, ty.Any]:
     """Return a copy of d with only the keys that correspond to attrs fields on Type."""
     attrs = get_attrs_names(Type)
     return {key: val for key, val in d.items() if key in attrs}
-
-
-def cat_attrs(
-    cls: type,
-    auto_attribs: bool = True,
-    disallow_empties: bool = True,
-    **kwargs: ty.Any,
-) -> type:
-    """Compatibility shim. Prefer using the @Cat decorator instead."""
-    return attr.attrs(
-        cls,
-        auto_attribs=auto_attribs,
-        field_transformer=make_disallow_empties_transformer(disallow_empties),
-        **kwargs,
-    )

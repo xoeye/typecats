@@ -4,15 +4,15 @@ from .exceptions import StructuringError, set_default_exception_hook
 from .tc import (
     Cat,
     TypeCat,
-    register_struc_hook,
-    register_struc_hook_func,
-    register_unstruc_hook,
-    register_unstruc_hook_func,
-    set_detailed_validation_mode_not_threadsafe,
+    unstruc,
     struc,
     try_struc,
-    unstruc,
+    register_struc_hook,
+    register_unstruc_hook,
+    register_struc_hook_func,
+    register_unstruc_hook_func,
     unstruc_strip_defaults,
+    set_detailed_validation_mode_not_threadsafe,
 )
 from .wildcat import is_wildcat
 

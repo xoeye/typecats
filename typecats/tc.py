@@ -1,6 +1,7 @@
 """Utilities for using attrs types with cattrs"""
 
 import typing as ty
+from functools import partial
 
 import attr
 import cattrs
@@ -44,32 +45,38 @@ class TypeCat:
         raise NotImplementedError
 
 
-_TYPECATS_DEFAULT_CONVERTER = TypecatsConverter()
+def make_struc(
+    converter: TypecatsConverter,
+    *,
+    hook_common_errors: TypecatsCommonExceptionHook = _emit_exception_to_default_handler,
+):
+    def _struc(cl: ty.Type[C], obj: StrucInput) -> C:
+        """A wrapper for cattrs structure that logs and re-raises structure exceptions."""
+        try:
+            return converter.structure(obj, cl)
+        except StructuringError as e:
+            hook_common_errors(e, obj, cl, _extract_typecats_stack_if_any(e))
+            raise e
+
+    return _struc
 
 
-def struc(cl: ty.Type[C], obj: StrucInput) -> C:
-    """A wrapper for cattrs structure that logs and re-raises structure exceptions."""
-    try:
-        return _TYPECATS_DEFAULT_CONVERTER.structure(obj, cl)
-    except StructuringError as e:
-        _emit_exception_to_default_handler(
-            e, obj, cl, _extract_typecats_stack_if_any(e)
-        )
-        raise e
+def make_unstruc(converter: TypecatsConverter):
+    def _unstruc(obj: ty.Any, *, strip_defaults: bool = False) -> ty.Any:
+        """A wrapper for cattrs unstructure using the internal converter."""
+        return converter.unstructure(obj, strip_defaults=strip_defaults)
 
-
-def unstruc(obj: ty.Any, *, strip_defaults: bool = False) -> ty.Any:
-    """A wrapper for cattrs unstructure using the internal converter."""
-    return _TYPECATS_DEFAULT_CONVERTER.unstructure(obj, strip_defaults=strip_defaults)
+    return _unstruc
 
 
 def _try_struc(
+    structure_method: ty.Callable[[ty.Type[C], StrucInput], C],
     cl: ty.Type[C],
     obj: ty.Optional[StrucInput],
 ) -> ty.Optional[C]:
     """A wrapper for cattrs structure that suppresses StructuringErrors and logs unexpected exceptions."""
     try:
-        return struc(cl, obj)  # type: ignore
+        return structure_method(cl, obj)  # type: ignore
     except StructuringError:
         return None
     except Exception as e:
@@ -79,7 +86,11 @@ def _try_struc(
         return None
 
 
-try_struc = _try_struc
+_TYPECATS_DEFAULT_CONVERTER = TypecatsConverter()
+
+struc = make_struc(_TYPECATS_DEFAULT_CONVERTER)
+unstruc = make_unstruc(_TYPECATS_DEFAULT_CONVERTER)
+try_struc = partial(_try_struc, struc)
 
 
 def get_default_converter() -> TypecatsConverter:

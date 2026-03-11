@@ -43,6 +43,11 @@ _CAT_FULLNAMES = frozenset(
 )
 
 
+def plugin(_version: str) -> type[TypecatsPlugin]:
+    """Return the plugin class for mypy to instantiate."""
+    return TypecatsPlugin
+
+
 def _add_cat_methods(ctx: ClassDefContext) -> None:
     any_type = AnyType(TypeOfAny.special_form)
     str_type = ctx.api.named_type("builtins.str")
@@ -85,8 +90,3 @@ class TypecatsPlugin(Plugin):  # pylint: disable=too-few-public-methods
         if fullname in _CAT_FULLNAMES:
             return _add_cat_methods
         return None
-
-
-def plugin(_version: str) -> type[TypecatsPlugin]:
-    """Return the plugin class for mypy to instantiate."""
-    return TypecatsPlugin
