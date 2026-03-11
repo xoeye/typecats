@@ -64,10 +64,8 @@ class TypecatsConverter(GenConverter):
 
         def unstructure_with_extras(obj):
             if isinstance(obj, dict) and not is_attrs_class(type(obj)):
-                # cattrs no longer coerces plain dicts in typed fields at unstructure time.
-                # This restores that behavior for backwards compatibility, as downstream code
-                # depends on being able to store raw dicts in Cat-typed fields. New code
-                # should store typed instances rather than raw dicts.
+                # Restores cattrs 22 behavior: plain dicts in attrs-typed fields are
+                # structured into the expected type before unstructuring.
                 obj = self.structure(obj, core_cls)
             res = base(obj)
             if ShouldStripDefaults.get():

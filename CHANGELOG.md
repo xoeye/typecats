@@ -2,34 +2,25 @@
 
 ## v2.1.0
 
+Adds Python 3.12–3.14 support, drops 3.10 and 3.11, and improves type inference for `@Cat` classes.
+
 Breaking changes:
 
-- Requires Python >=3.12
-- Requires `attrs >=21.4.0,<26.0.0` and `cattrs >=22.1.0,<27.0.0`
-- `patch_converter_for_typecats` removed; use `TypecatsConverter()` directly
-- `_compat.py` removed (was dead code on Python 3.12+)
+- Python >=3.12 required
+- `attrs >=25.4.0,<27.0.0` and `cattrs >=26.1.0,<27.0.0` required
+- `patch_converter_for_typecats` removed — instantiate `TypecatsConverter()` directly instead
 
 New features:
 
-- `@typing.dataclass_transform` added to `Cat` — mypy and pyright now understand constructor signatures and field types on all `@Cat`-decorated classes
-- Mypy plugin (`typecats.cats_mypy_plugin`) adds `.struc()`, `.try_struc()`, and `.unstruc()` method signatures to `@Cat` classes; enable with `plugins = ["typecats.cats_mypy_plugin"]` in your mypy config
-- `TypecatsConverter` is now a public export
-- `TypeCat` is now a public export
-- `set_default_exception_hook` is now a public export
-- `FieldTransformer` type alias exported from `typecats.attrs_shim`
+- **Full IDE constructor inference on `@Cat` classes** — field names, types, and defaults are now visible at call sites in pyright and mypy. `@Cat(frozen=True)` also enforces field immutability statically.
+- **Mypy plugin** (`typecats.cats_mypy_plugin`) — `.struc()`, `.try_struc()`, and `.unstruc()` are now visible to mypy on all `@Cat` classes, with correct return types for generics and `strip_defaults` on `unstruc`. Enable with `plugins = ["typecats.cats_mypy_plugin"]` in your mypy config.
+- `TypecatsConverter` — public `GenConverter` subclass; use this if you need to register custom hooks or extend converter behavior
+- `TypeCat`, `set_default_exception_hook`, and `FieldTransformer` are now public exports
 
-Other changes:
+Bug fixes:
 
-- Replaced private `attrs` internals with public `field_transformer` API
-- Replaced converter patching with a clean `TypecatsConverter(GenConverter)` subclass
-- Type annotations added throughout the library
-- `assert` in `strip_defaults.py` replaced with a proper `TypeError`
-- CI updated to use uv, uv caching, and test against Python 3.12, 3.13, and 3.14
-- `pyproject.toml` updated with license, readme, classifiers, and project URLs
-- `TypeCat.unstruc` signature now includes `strip_defaults: bool = False` to match the injected runtime implementation
-- Mypy plugin `unstruc` signature now includes `strip_defaults` and uses `fill_typevars` so generic `@Cat` classes return properly parameterized types
-- `_has_with_generic` in `TypecatsConverter` now guards against `typing.get_origin()` returning `None`
-- `is_wildcat` now normalizes parameterized generics via `typing.get_origin()` before checking attrs/mro
+- Parameterized generic wildcats (e.g. `MyWildcat[str]`) now structure and unstructure correctly
+- Restored cattrs 22 behavior where plain dicts stored in attrs-typed fields are coerced before unstructuring
 
 ## v2.0.2
 
