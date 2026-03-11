@@ -32,6 +32,8 @@ def nonempty_validator(
 ) -> None:
     """Don't allow strings and collections without attr defaults to have empty/False-y values."""
     if attribute.type in _SCALAR_TYPES_WITH_NO_EMPTY_VALUES:
+        # doesn't make sense to 'validate' these types against emptiness
+        # since 0 or False are not 'empty' values
         return
     if attribute.default is attr.NOTHING:
         if not value:

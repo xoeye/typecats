@@ -80,12 +80,15 @@ def _try_struc(
     except StructuringError:
         return None
     except Exception as e:
+        # unexpected errors will only go through the default handler
         _emit_exception_to_default_handler(
             e, obj, cl, _extract_typecats_stack_if_any(e)
         )
         return None
 
 
+# This is the default pre-configured converter. All of its functionality
+# can be applied to any TypecatsConverter instance.
 _TYPECATS_DEFAULT_CONVERTER = TypecatsConverter()
 
 struc = make_struc(_TYPECATS_DEFAULT_CONVERTER)
@@ -197,6 +200,8 @@ def Cat(
     """
 
     def make_cat(cls: ty.Type[C]) -> ty.Type[C]:
+        # it is always safe to apply this attrs-class-making decorator,
+        # even if there's already an __attrs_attrs__ on a base class.
         user_transformer = kwargs.get("field_transformer")
         cls = attr.attrs(
             cls,
