@@ -118,6 +118,7 @@ def set_detailed_validation_mode_not_threadsafe(enabled=True):
     _TYPECATS_DEFAULT_CONVERTER._structure_func.clear_cache()
 
 
+@ty.overload
 @ty.dataclass_transform(
     eq_default=True,
     order_default=False,
@@ -125,6 +126,32 @@ def set_detailed_validation_mode_not_threadsafe(enabled=True):
     kw_only_default=False,
     field_specifiers=(attr.attrib, attr.ib, attr.field),
 )
+def Cat(
+    maybe_cls: ty.Type[C],
+    auto_attribs: bool = ...,
+    disallow_empties: bool = ...,
+    converter: TypecatsConverter = ...,
+    **kwargs: ty.Any,
+) -> ty.Type[C]: ...
+
+
+@ty.overload
+@ty.dataclass_transform(
+    eq_default=True,
+    order_default=False,
+    frozen_default=False,
+    kw_only_default=False,
+    field_specifiers=(attr.attrib, attr.ib, attr.field),
+)
+def Cat(
+    maybe_cls: None = ...,
+    auto_attribs: bool = ...,
+    disallow_empties: bool = ...,
+    converter: TypecatsConverter = ...,
+    **kwargs: ty.Any,
+) -> ty.Callable[[ty.Type[C]], ty.Type[C]]: ...
+
+
 def Cat(
     maybe_cls=None,
     auto_attribs=True,
