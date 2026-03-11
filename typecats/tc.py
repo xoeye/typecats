@@ -132,6 +132,9 @@ def set_detailed_validation_mode_not_threadsafe(enabled=True):
     _TYPECATS_DEFAULT_CONVERTER._structure_func.clear_cache()
 
 
+# Overloads disambiguate the bare (@Cat) and factory (@Cat(...)) call forms.
+# @dataclass_transform instructs pyright/mypy to synthesize __init__ signatures
+# from field annotations, allowing Cat to get dataclass-like type inference.
 @ty.overload
 @ty.dataclass_transform(
     eq_default=True,

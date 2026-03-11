@@ -1,4 +1,7 @@
-"""TypecatsConverter: a GenConverter subclass with wildcat, strip_defaults, and typing.Any support."""
+"""TypecatsConverter: a GenConverter subclass with wildcat, strip_defaults, and typing.Any support.
+
+Replaces the old patch.py approach of monkey-patching an external converter instance.
+"""
 
 import typing as ty
 
