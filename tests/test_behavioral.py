@@ -498,6 +498,23 @@ def test_cat_attrs_shim():
         Foo("")
 
 
+def test_cat_attrs_shim_bare_decorator():
+    from typecats.attrs_shim import cat_attrs
+    import attr
+
+    @cat_attrs
+    class Foo:
+        name: str = attr.ib()
+        count: int = attr.ib(default=0)
+
+    obj = Foo("hello")
+    assert obj.name == "hello"
+    assert obj.count == 0
+
+    with pytest.raises(ValueError):
+        Foo("")
+
+
 def test_drop_nonattrs_shim():
     from typecats.attrs_shim import drop_nonattrs
 

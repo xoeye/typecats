@@ -160,6 +160,24 @@ def test_custom_converter():
     assert struc(WithCustomConverter, {"value": "world"}).value == "world"
 
 
+def test_make_struc_make_unstruc_with_custom_converter():
+    from typecats.tc import make_struc, make_unstruc
+
+    @Cat
+    class Thing:
+        value: str
+
+    custom = TypecatsConverter()
+    custom.register_unstructure_hook(Thing, lambda obj: {"value": obj.value.upper()})
+    custom_struc = make_struc(custom)
+    custom_unstruc = make_unstruc(custom)
+
+    obj = custom_struc(Thing, {"value": "hello"})
+    assert obj.value == "hello"
+    assert custom_unstruc(obj) == {"value": "HELLO"}
+    assert unstruc(obj) == {"value": "hello"}  # default converter unaffected
+
+
 def test_set_struc_unstruc_converter():
     from typecats.tc import set_struc_converter, set_unstruc_converter
 
