@@ -485,7 +485,7 @@ def test_module_struc_and_class_struc_are_equivalent():
 def test_cat_attrs_shim():
     from typecats.attrs_shim import cat_attrs
 
-    @cat_attrs
+    @cat_attrs(auto_attribs=True)
     class Foo:
         name: str
         count: int = 0

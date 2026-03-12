@@ -13,18 +13,27 @@ FieldTransformer = ty.Callable[[type, list[attr.Attribute]], list[attr.Attribute
 
 
 def cat_attrs(
-    cls: type,
-    auto_attribs: bool = True,
+    maybe_cls: type | None = None,
+    auto_attribs: bool = False,
     disallow_empties: bool = True,
     **kwargs: ty.Any,
 ) -> type:
     """Compatibility shim. Prefer using the @Cat decorator instead."""
-    return attr.attrs(
-        cls,
-        auto_attribs=auto_attribs,
-        field_transformer=make_disallow_empties_transformer(disallow_empties),
-        **kwargs,
-    )
+    user_transformer = kwargs.pop("field_transformer", None)
+
+    def wrap(cls: type) -> type:
+        return attr.attrs(
+            cls,
+            auto_attribs=auto_attribs,
+            field_transformer=make_disallow_empties_transformer(
+                disallow_empties, user_transformer
+            ),
+            **kwargs,
+        )
+
+    if maybe_cls is None:
+        return wrap  # type: ignore[return-value]
+    return wrap(maybe_cls)
 
 
 def nonempty_validator(
