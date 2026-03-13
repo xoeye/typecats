@@ -1,6 +1,10 @@
-import importlib.metadata
+"""Package version."""
+
+from importlib.metadata import PackageNotFoundError, version
 
 try:
-    __version__ = importlib.metadata.version(__package__)
-except importlib.metadata.PackageNotFoundError:
-    __version__ = "0.0.0+dev.0"
+    __version__ = version(
+        __package__,  # type: ignore[arg-type]  # pyright: ignore[reportArgumentType]
+    )
+except PackageNotFoundError:
+    __version__ = "0.0.0.dev0"
