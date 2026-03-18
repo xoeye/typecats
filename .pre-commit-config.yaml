@@ -20,6 +20,12 @@ repos:
         language: system
         types: [python]
 
+      - id: isort
+        name: isort
+        entry: uv run isort
+        language: system
+        types: [python]
+
       - id: flake8
         name: flake8
         entry: uv run flake8

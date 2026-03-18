@@ -33,6 +33,7 @@ Issues = "https://github.com/xoeye/typecats/issues"
 dev = [
     "black>=26.1.0,<27.0.0",
     "flake8>=7.3.0,<8.0.0",
+    "isort>=8.0.1,<9.0.0",
     "mypy>=1.19.1,<2.0.0",
     "pylint>=4.0.5,<5.0.0",
     "pytest>=9.0.2,<10.0.0",
@@ -43,6 +44,19 @@ dev = [
 [[tool.uv.index]]
 name = "pypi"
 url = "https://pypi.org/simple"
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+line_length = 120
+
+[tool.pylint.basic]
+good-names = ["i", "j", "k", "ex", "Run", "_", "Cat"]
+
+[tool.pylint.format]
+max-line-length = 120
 
 [build-system]
 requires = ["hatchling"]

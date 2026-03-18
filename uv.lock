@@ -530,6 +530,7 @@ dependencies = [
 dev = [
     { name = "black" },
     { name = "flake8" },
+    { name = "isort" },
     { name = "mypy" },
     { name = "pylint" },
     { name = "pytest" },
@@ -547,6 +548,7 @@ requires-dist = [
 dev = [
     { name = "black", specifier = ">=26.1.0,<27.0.0" },
     { name = "flake8", specifier = ">=7.3.0,<8.0.0" },
+    { name = "isort", specifier = ">=8.0.1,<9.0.0" },
     { name = "mypy", specifier = ">=1.19.1,<2.0.0" },
     { name = "pylint", specifier = ">=4.0.5,<5.0.0" },
     { name = "pytest", specifier = ">=9.0.2,<10.0.0" },

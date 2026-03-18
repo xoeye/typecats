@@ -1,13 +1,14 @@
 """Implements some nice-to-haves for the 'Wildcat' concept of structurable dynamic Class properties."""
 
-import typing as ty
 import logging
+import typing as ty
 
 from attr import has as is_attrs_class
 from cattrs import Converter
+
 from .attrs_shim import get_attrs_names
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 MWC = ty.TypeVar("MWC", bound=ty.MutableMapping)
@@ -21,9 +22,7 @@ def is_wildcat(cls: object) -> bool:
     return is_attrs_class(core) and dict in core.__mro__
 
 
-def enrich_structured_wildcat(
-    wildcat: MWC, prestructured_obj_dict: ty.Mapping[ty.Any, ty.Any], Type: type
-) -> None:
+def enrich_structured_wildcat(wildcat: MWC, prestructured_obj_dict: ty.Mapping[ty.Any, ty.Any], Type: type) -> None:
     """A Wildcat is a Cat (an attrs class) that additionally allows
     arbitrary key-value access as though it were a dict for data that
     does not have a defined attribute name on the class (i.e. is not typed).
@@ -38,23 +37,15 @@ def enrich_structured_wildcat(
 
     """
     wildcat.update(
-        {
-            key: prestructured_obj_dict[key]
-            for key in prestructured_obj_dict
-            if key not in get_attrs_names(Type)
-        }
+        {key: prestructured_obj_dict[key] for key in prestructured_obj_dict if key not in get_attrs_names(Type)}
     )
 
 
 def enrich_unstructured_wildcat(
-    converter: Converter, obj: WC, unstructured_obj_dict: dict
-) -> dict:
+    converter: Converter, obj: WC, unstructured_obj_dict: dict[str, ty.Any]
+) -> dict[str, ty.Any]:
     wildcat_attrs_names = get_attrs_names(type(obj))
-    wildcat_nonattrs_dict = {
-        key: converter.unstructure(obj[key])
-        for key in obj
-        if key not in wildcat_attrs_names
-    }
+    wildcat_nonattrs_dict = {key: converter.unstructure(obj[key]) for key in obj if key not in wildcat_attrs_names}
     # note that typed entries take absolute precedence over untyped in case of collisions.
     # these collisions should generally be prevented at runtime by the wildcat
     # logic that is injected into the type, but if something were to sneak through
@@ -62,20 +53,18 @@ def enrich_unstructured_wildcat(
     return {**wildcat_nonattrs_dict, **unstructured_obj_dict}
 
 
-def _strip_defined_abstract_methods(cls):
+def _strip_defined_abstract_methods(cls: type) -> None:
     """If a method has been dynamically defined/mixed-in, then it is no longer abstract,
 
     but apparently this must be fixed up manually
     """
     abs_methods = getattr(cls, "__abstractmethods__", None)
     if abs_methods:
-        new_abs_methods = {
-            methodname for methodname in abs_methods if methodname not in cls.__dict__
-        }
+        new_abs_methods = {methodname for methodname in abs_methods if methodname not in cls.__dict__}
         setattr(cls, "__abstractmethods__", frozenset(new_abs_methods))
 
 
-def setup_warnings_for_dangerous_dict_subclass_operations(cls):
+def setup_warnings_for_dangerous_dict_subclass_operations(cls: type) -> None:
     """Adds safeguards that will warn about attributes that 'overlap' keys
     to a class that inherits from dict.
     """
@@ -110,9 +99,7 @@ def setup_warnings_for_dangerous_dict_subclass_operations(cls):
     def update(self, other_dict=None, **kwargs):
         if not other_dict:
             other_dict = kwargs
-        non_attribute_kvs = {
-            k: v for k, v in other_dict.items() if not hasattr(self, k)
-        }
+        non_attribute_kvs = {k: v for k, v in other_dict.items() if not hasattr(self, k)}
         for key, value in other_dict.items():
             if key not in non_attribute_kvs:
                 self[key] = value  # reuse __setitem__ which will forward to setattr
@@ -121,7 +108,7 @@ def setup_warnings_for_dangerous_dict_subclass_operations(cls):
     setattr(cls, "update", update)
 
 
-def mixin_wildcat_post_attrs_methods(cls):
+def mixin_wildcat_post_attrs_methods[T](cls: type[T]) -> None:
     """Adds a repr to an attrs class that additionally prints out an internal dict"""
 
     def __repr__(self):
@@ -129,9 +116,7 @@ def mixin_wildcat_post_attrs_methods(cls):
             wd = dict(dict.items(self)) if dict.keys(self) else None
             wildcat_part = f"+Wildcat{wd}" if wd else ""
         else:
-            wildcat_part = (
-                f"+Wildcat{self.__wildcat_dict}" if self.__wildcat_dict else ""
-            )
+            wildcat_part = f"+Wildcat{self.__wildcat_dict}" if self.__wildcat_dict else ""
         return self.__attrs_repr__() + wildcat_part
 
     setattr(cls, "__attrs_repr__", cls.__repr__)

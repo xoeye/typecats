@@ -16,18 +16,16 @@ def cat_attrs(
     maybe_cls: type | None = None,
     auto_attribs: bool = False,
     disallow_empties: bool = True,
+    field_transformer: FieldTransformer | None = None,
     **kwargs: ty.Any,
 ) -> type:
     """Compatibility shim. Prefer using the @Cat decorator instead."""
-    user_transformer = kwargs.pop("field_transformer", None)
 
     def wrap(cls: type) -> type:
         return attr.attrs(
             cls,
             auto_attribs=auto_attribs,
-            field_transformer=make_disallow_empties_transformer(
-                disallow_empties, user_transformer
-            ),
+            field_transformer=make_disallow_empties_transformer(disallow_empties, field_transformer),
             **kwargs,
         )
 
@@ -36,9 +34,7 @@ def cat_attrs(
     return wrap(maybe_cls)
 
 
-def nonempty_validator(
-    self: ty.Any, attribute: attr.Attribute[ty.Any], value: ty.Any
-) -> None:
+def nonempty_validator(self: ty.Any, attribute: attr.Attribute[ty.Any], value: ty.Any) -> None:
     """Don't allow strings and collections without attr defaults to have empty/False-y values."""
     if attribute.type in _SCALAR_TYPES_WITH_NO_EMPTY_VALUES:
         # doesn't make sense to 'validate' these types against emptiness
@@ -58,9 +54,7 @@ def make_disallow_empties_transformer(
 ) -> FieldTransformer:
     """Returns a field_transformer that optionally injects nonempty validators on required fields."""
 
-    def transformer(
-        cls: type, fields: list[attr.Attribute[ty.Any]]
-    ) -> list[attr.Attribute[ty.Any]]:
+    def transformer(cls: type, fields: list[attr.Attribute]) -> list[attr.Attribute]:
         result = []
         for field in fields:
             if (
@@ -69,9 +63,7 @@ def make_disallow_empties_transformer(
                 and field.type not in _SCALAR_TYPES_WITH_NO_EMPTY_VALUES
             ):
                 combined = (
-                    attr.validators.and_(field.validator, nonempty_validator)
-                    if field.validator
-                    else nonempty_validator
+                    attr.validators.and_(field.validator, nonempty_validator) if field.validator else nonempty_validator
                 )
                 field = field.evolve(validator=combined)
             result.append(field)

@@ -1,13 +1,12 @@
 from __future__ import annotations
 
+import contextvars as cv
 import typing as ty
 from functools import lru_cache
-import contextvars as cv
+from typing import Literal
 
 import attr
 from attr import has as is_attrs_class
-
-from typing import Literal
 
 ShouldStripDefaults = cv.ContextVar("TypecatsShouldStripDefaults", default=False)
 
@@ -37,9 +36,7 @@ def _get_names_of_defaulted_nonliteral_attrs(attrs_obj: ty.Any) -> set[str]:
     return res
 
 
-def strip_attrs_defaults(
-    unstructured_but_unclean: dict[str, ty.Any], obj_to_unstructure: ty.Any
-) -> dict[str, ty.Any]:
+def strip_attrs_defaults(unstructured_but_unclean: dict[str, ty.Any], obj_to_unstructure: ty.Any) -> dict[str, ty.Any]:
     """The idea here is that when you are using pure dicts, a key can be
     missing to indicate absence.  But if you're dealing with typed
     objects, that's not possible since all keys are always present.  So
