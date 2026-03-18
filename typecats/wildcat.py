@@ -64,7 +64,7 @@ def _strip_defined_abstract_methods(cls: type) -> None:
         setattr(cls, "__abstractmethods__", frozenset(new_abs_methods))
 
 
-def setup_warnings_for_dangerous_dict_subclass_operations(cls: type) -> None:
+def setup_warnings_for_dangerous_dict_subclass_operations[T](cls: type[T]) -> None:
     """Adds safeguards that will warn about attributes that 'overlap' keys
     to a class that inherits from dict.
     """
@@ -81,7 +81,7 @@ def setup_warnings_for_dangerous_dict_subclass_operations(cls: type) -> None:
             warn_key_set_on_attribute(key)
             setattr(self, key, item)
         else:
-            super(cls, self).__setitem__(key, item)  # type: ignore
+            super(cls, self).__setitem__(key, item)
 
     setattr(cls, "__setitem__", __setitem__)
 
@@ -92,7 +92,7 @@ def setup_warnings_for_dangerous_dict_subclass_operations(cls: type) -> None:
                 "so this should be changed to attribute access."
             )
             return getattr(self, key)
-        return super(cls, self).__getitem__(key)  # type: ignore
+        return super(cls, self).__getitem__(key)
 
     setattr(cls, "__getitem__", __getitem__)
 
@@ -103,7 +103,7 @@ def setup_warnings_for_dangerous_dict_subclass_operations(cls: type) -> None:
         for key, value in other_dict.items():
             if key not in non_attribute_kvs:
                 self[key] = value  # reuse __setitem__ which will forward to setattr
-        super(cls, self).update(non_attribute_kvs)  # type: ignore
+        super(cls, self).update(non_attribute_kvs)
 
     setattr(cls, "update", update)
 

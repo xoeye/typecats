@@ -71,11 +71,11 @@ def make_unstruc(converter: TypecatsConverter) -> UnstrucFunc:
 def _try_struc(
     structure_method: ty.Callable[[ty.Type[C], StrucInput], C],
     cl: ty.Type[C],
-    obj: ty.Optional[StrucInput],
+    obj: StrucInput,
 ) -> ty.Optional[C]:
     """A wrapper for cattrs structure that suppresses StructuringErrors and logs unexpected exceptions."""
     try:
-        return structure_method(cl, obj)  # type: ignore
+        return structure_method(cl, obj)
     except StructuringError:
         return None
     except Exception as e:
@@ -94,6 +94,8 @@ unstruc: UnstrucFunc = make_unstruc(_TYPECATS_DEFAULT_CONVERTER)
 
 def try_struc[C](cl: type[C], obj: StrucInput | None) -> C | None:  # pylint: disable=redefined-outer-name
     """Structure obj into cl, returning None on StructuringError."""
+    if obj is None:
+        return None
     return _try_struc(struc, cl, obj)
 
 

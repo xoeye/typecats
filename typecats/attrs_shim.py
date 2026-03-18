@@ -12,13 +12,33 @@ _SCALAR_TYPES_WITH_NO_EMPTY_VALUES = (bool, float, int, Decimal)
 FieldTransformer = ty.Callable[[type, list[attr.Attribute]], list[attr.Attribute]]
 
 
+@ty.overload
+def cat_attrs(
+    maybe_cls: type,
+    auto_attribs: bool = ...,
+    disallow_empties: bool = ...,
+    field_transformer: FieldTransformer | None = ...,
+    **kwargs: ty.Any,
+) -> type: ...
+
+
+@ty.overload
+def cat_attrs(
+    maybe_cls: None = ...,
+    auto_attribs: bool = ...,
+    disallow_empties: bool = ...,
+    field_transformer: FieldTransformer | None = ...,
+    **kwargs: ty.Any,
+) -> ty.Callable[[type], type]: ...
+
+
 def cat_attrs(
     maybe_cls: type | None = None,
     auto_attribs: bool = False,
     disallow_empties: bool = True,
     field_transformer: FieldTransformer | None = None,
     **kwargs: ty.Any,
-) -> type:
+) -> type | ty.Callable[[type], type]:
     """Compatibility shim. Prefer using the @Cat decorator instead."""
 
     def wrap(cls: type) -> type:
@@ -30,7 +50,7 @@ def cat_attrs(
         )
 
     if maybe_cls is None:
-        return wrap  # type: ignore[return-value]
+        return wrap
     return wrap(maybe_cls)
 
 

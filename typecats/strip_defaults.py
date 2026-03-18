@@ -14,20 +14,30 @@ ShouldStripDefaults = cv.ContextVar("TypecatsShouldStripDefaults", default=False
 _MISSING = object()
 
 
+class _Factory(ty.Protocol):
+    factory: ty.Callable[[], ty.Any]
+
+
+def _is_factory_default(default: ty.Any) -> ty.TypeGuard[_Factory]:
+    return hasattr(default, "factory")
+
+
 @lru_cache(128)
 def _get_factory_default(_attr: attr.Attribute[ty.Any]) -> ty.Any:
-    return _attr.default.factory()  # type: ignore[union-attr]
+    assert _is_factory_default(_attr.default)
+    return _attr.default.factory()
 
 
 def _get_attr_default_value(attribute: attr.Attribute[ty.Any]) -> ty.Any:
-    if hasattr(attribute.default, "factory"):
+    if _is_factory_default(attribute.default):
         return _get_factory_default(attribute)
     return attribute.default
 
 
-def _get_names_of_defaulted_nonliteral_attrs(attrs_obj: ty.Any) -> set[str]:
+def _get_names_of_defaulted_nonliteral_attrs(attrs_obj: attr.AttrsInstance) -> set[str]:
     res: set[str] = set()
-    for _attr in attrs_obj.__attrs_attrs__:
+    fields: tuple[attr.Attribute[ty.Any], ...] = attr.fields(attrs_obj.__class__)
+    for _attr in fields:
         if getattr(_attr.type, "__origin__", None) is Literal:
             # don't strip attributes annotated as Literals - they're requirements, not "defaults"
             continue
@@ -36,7 +46,9 @@ def _get_names_of_defaulted_nonliteral_attrs(attrs_obj: ty.Any) -> set[str]:
     return res
 
 
-def strip_attrs_defaults(unstructured_but_unclean: dict[str, ty.Any], obj_to_unstructure: ty.Any) -> dict[str, ty.Any]:
+def strip_attrs_defaults(
+    unstructured_but_unclean: dict[str, ty.Any], obj_to_unstructure: attr.AttrsInstance
+) -> dict[str, ty.Any]:
     """The idea here is that when you are using pure dicts, a key can be
     missing to indicate absence.  But if you're dealing with typed
     objects, that's not possible since all keys are always present.  So
