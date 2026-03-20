@@ -1,3 +1,27 @@
+# Changelog
+
+## v2.1.0
+
+Adds Python 3.12–3.14 support, drops 3.10 and 3.11, and improves type inference for `@Cat` classes.
+
+Breaking changes:
+
+- Python >=3.12 required
+- `attrs >=25.4.0,<27.0.0` and `cattrs >=26.1.0,<27.0.0` required
+- `patch_converter_for_typecats` removed — instantiate `TypecatsConverter()` directly instead
+
+New features:
+
+- **Full IDE constructor inference on `@Cat` classes** — field names, types, and defaults are now visible at call sites in pyright and mypy. `@Cat(frozen=True)` also enforces field immutability statically.
+- **Mypy plugin** (`typecats.cats_mypy_plugin`) — `.struc()`, `.try_struc()`, and `.unstruc()` are now visible to mypy on all `@Cat` classes, with correct return types for generics and `strip_defaults` on `unstruc`. Enable with `plugins = ["typecats.cats_mypy_plugin"]` in your mypy config.
+- `TypecatsConverter` — public `GenConverter` subclass; use this if you need to register custom hooks or extend converter behavior
+- `TypeCat`, `set_default_exception_hook`, and `FieldTransformer` are now public exports
+
+Bug fixes:
+
+- Parameterized generic wildcats (e.g. `MyWildcat[str]`) now structure and unstructure correctly
+- Restored cattrs 22 behavior where plain dicts stored in attrs-typed fields are coerced before unstructuring
+
 ## v2.0.2
 
 - Fixes regression in post cattrs-1.1.2 where attrs objects in `typing.Any` fields are
@@ -7,7 +31,7 @@
 
 - Fixes error in structuring parameterized generic wildcats
 
-# v2.0.0
+## v2.0.0
 
 Breaking changes:
 
@@ -34,7 +58,7 @@ Other changes:
   primarily to fix a `cattrs` bug wherein union field types where types in the
   union have defaults are not always correctly structured.
 
-### 1.6.1
+## 1.6.1
 
 - Wildcats now properly implement `__eq__` to include the actual
   wildcat dictionary. Additionally, this fixes a bug where
@@ -57,7 +81,7 @@ Can be called using `unstruc_strip_defaults(your_attrs_obj)`, or on a
 Cat type using the new boolean keyword argument on `unstruc`,
 `your_cats_obj.unstruc(strip_defaults=True)`.
 
-### 1.4.1
+## 1.4.1
 
 No longer assume that the `dict` methods will not be overlaid on a
 Wildcat by `attrs` attributes.
@@ -75,11 +99,11 @@ enable `typecats` functionality while still maintaining all the
 existing functionality and previously-registered function-dispatched
 structure and unstructure hooks within your Converter.
 
-### 1.3.2
+## 1.3.2
 
 Reworked Wildcat functionality to use a cleaner hooking process.
 
-### 1.3.1
+## 1.3.1
 
 Corrected return type of `try_struc` to be `Optional[T]`.
 
@@ -99,7 +123,7 @@ passing them through.
 
 Improved structure exception logging.
 
-### 1.1.1
+## 1.1.1
 
 Typecats will now preserve user-provided `attrs` validators.
 
@@ -113,10 +137,10 @@ warnings instead. This more permissive behavior will allow a smoother
 progression for code that was written before an attribute was
 subsequently added (typed).
 
-### 1.0.1
+## 1.0.1
 
 Added README and Github url to setup.py.
 
-# 1.0.0
+## 1.0.0
 
 Initial release of typecats.

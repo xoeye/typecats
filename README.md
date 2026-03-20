@@ -45,7 +45,7 @@ features. The 4 core features are:
       TestCat.struc(dict(name='Tom', age=9)) == TestCat(name='Tom', age=9)
 
       TestCat.struc(dict(name='Tom', age=9)).unstruc() == dict(name='Tom', age=9)
-   except StructuringException as e:
+   except StructuringError as e:
       ...
    ```
 
@@ -240,25 +240,31 @@ addition to, rather than as a replacement for, those libraries.
 Use `register_struc_hook` and `register_unstruc_hook` to register on
 the built-in converter instance.
 
-`typecats` uses newer-style static typing within its own codebase, and
-is therefore currently only compatible with Python 3.6 and up.
-
 ### Python version compatibility
 
-As core parts of the implementation, both `attrs` and `cattrs` are
-specific-version runtime dependencies. `cattrs` is the more
-restrictive library in terms of its compatibility, so as of 1.7.0,
-because of the upgrade to `cattrs` 1.1.x, `typecats` is compatible
-with Python 3.7 through 3.9.
+`typecats` requires Python 3.12 or higher.
 
 #### mypy plugin
 
 `typecats` provides a mypy plugin that tells mypy how to interpret the
-dynamically-generated `struc` and `unstruc` methods on `Cat`-annotated
-classes and objects.
+dynamically-generated `struc`, `try_struc`, and `unstruc` methods on
+`@Cat`-decorated classes. Additionally, `@typing.dataclass_transform`
+is applied to `Cat` so that mypy and pyright understand constructor
+signatures and field types without requiring the plugin.
 
-This plugin was most recently updated to account for plugin API
-changes in mypy 0.750.
+Enable the plugin in `mypy.ini`:
+
+```ini
+[mypy]
+plugins = typecats.cats_mypy_plugin
+```
+
+Or in `pyproject.toml`:
+
+```toml
+[tool.mypy]
+plugins = ["typecats.cats_mypy_plugin"]
+```
 
 ## Users/Stability
 

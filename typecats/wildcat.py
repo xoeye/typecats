@@ -1,12 +1,11 @@
 """Implements some nice-to-haves for the 'Wildcat' concept of structurable dynamic Class properties."""
-# pylint: disable=protected-access
+
 import typing as ty
 import logging
 
 from attr import has as is_attrs_class
-from cattr.converters import Converter
+from cattrs import Converter
 from .attrs_shim import get_attrs_names
-
 
 logger = logging.getLogger(__name__)
 
@@ -15,8 +14,11 @@ MWC = ty.TypeVar("MWC", bound=ty.MutableMapping)
 WC = ty.TypeVar("WC", bound=ty.Mapping)
 
 
-def is_wildcat(cls: type) -> bool:
-    return is_attrs_class(cls) and dict in cls.__mro__
+def is_wildcat(cls: object) -> bool:
+    core = ty.get_origin(cls) or cls
+    if not isinstance(core, type):
+        return False
+    return is_attrs_class(core) and dict in core.__mro__
 
 
 def enrich_structured_wildcat(
@@ -44,10 +46,14 @@ def enrich_structured_wildcat(
     )
 
 
-def enrich_unstructured_wildcat(converter: Converter, obj: WC, unstructured_obj_dict: dict) -> dict:
+def enrich_unstructured_wildcat(
+    converter: Converter, obj: WC, unstructured_obj_dict: dict
+) -> dict:
     wildcat_attrs_names = get_attrs_names(type(obj))
     wildcat_nonattrs_dict = {
-        key: converter.unstructure(obj[key]) for key in obj if key not in wildcat_attrs_names
+        key: converter.unstructure(obj[key])
+        for key in obj
+        if key not in wildcat_attrs_names
     }
     # note that typed entries take absolute precedence over untyped in case of collisions.
     # these collisions should generally be prevented at runtime by the wildcat
@@ -104,7 +110,9 @@ def setup_warnings_for_dangerous_dict_subclass_operations(cls):
     def update(self, other_dict=None, **kwargs):
         if not other_dict:
             other_dict = kwargs
-        non_attribute_kvs = {k: v for k, v in other_dict.items() if not hasattr(self, k)}
+        non_attribute_kvs = {
+            k: v for k, v in other_dict.items() if not hasattr(self, k)
+        }
         for key, value in other_dict.items():
             if key not in non_attribute_kvs:
                 self[key] = value  # reuse __setitem__ which will forward to setattr
@@ -121,7 +129,9 @@ def mixin_wildcat_post_attrs_methods(cls):
             wd = dict(dict.items(self)) if dict.keys(self) else None
             wildcat_part = f"+Wildcat{wd}" if wd else ""
         else:
-            wildcat_part = f"+Wildcat{self.__wildcat_dict}" if self.__wildcat_dict else ""
+            wildcat_part = (
+                f"+Wildcat{self.__wildcat_dict}" if self.__wildcat_dict else ""
+            )
         return self.__attrs_repr__() + wildcat_part
 
     setattr(cls, "__attrs_repr__", cls.__repr__)

@@ -5,10 +5,11 @@ core:
   - typecats/**/*
 
 dependencies:
-  - Pipfile*
+  - pyproject.toml
+  - uv.lock
 
 internal:
-  - ./CHANGES.md
+  - ./CHANGELOG.md
 
 documentation:
   - ./README.md

@@ -1,180 +1,91 @@
-"""A Plugin for MyPy that helps it understand the Cats wrapper around attrs and cattrs"""
-# flake8: noqa
-# pylint: skip-file
-# pylint: disable=import-error
-import typing as ty
-from mypy.nodes import (
-    Var,
-    Argument,
-    ARG_POS,
+"""Mypy plugin for typecats.
+
+Adds .struc(), .try_struc(), and .unstruc() method signatures to all
+@Cat-decorated classes so mypy understands their types.
+
+To enable, add to your pyproject.toml:
+
+    [tool.mypy]
+    plugins = ["typecats.cats_mypy_plugin"]
+
+Or to mypy.ini:
+
+    [mypy]
+    plugins = typecats.cats_mypy_plugin
+"""
+
+from __future__ import annotations
+
+from collections.abc import Callable
+from typing import override
+
+from mypy.nodes import (  # pylint: disable=no-name-in-module
     ARG_NAMED_OPT,
-    FuncDef,
-    PassStmt,
-    Block,
-    SymbolTableNode,
-    MDEF,
-    SymbolTable,
-    TypeInfo,
-    FuncBase,
-    SymbolNode,
+    ARG_POS,
+    Argument,
+    Var,
 )
-from mypy.types import (
-    NoneTyp,
-    Type,
-    CallableType,
+from mypy.plugin import ClassDefContext, Plugin  # pylint: disable=no-name-in-module
+from mypy.plugins.common import add_method  # pylint: disable=no-name-in-module
+from mypy.typeops import fill_typevars  # pylint: disable=no-name-in-module
+from mypy.types import (  # pylint: disable=no-name-in-module
     AnyType,
+    NoneType,
     TypeOfAny,
-    Instance,
     UnionType,
 )
-from mypy.typevars import fill_typevars
-from mypy.semanal import set_callable_name
-from mypy.plugin import Plugin, ClassDefContext
-from mypy.plugins.attrs import attr_class_maker_callback
-from mypy.plugins.common import add_method
+
+_CAT_FULLNAMES = frozenset(
+    {
+        "typecats.Cat",
+        "typecats.tc.Cat",
+    },
+)
 
 
-CAT_PATH = "typecats.tc.Cat"
-STRUCTURE_NAME = "struc"
-TRY_STRUCTURE_NAME = "try_struc"
-UNSTRUCTURE_NAME = "unstruc"
-
-
-def fullname(x: ty.Union[FuncBase, SymbolNode]) -> str:
-    fn = x.fullname
-    if callable(fn):
-        return fn()
-    return fn
-
-
-def nameit(x: ty.Union[FuncBase, SymbolNode]) -> str:
-    fn = x.name
-    if callable(fn):
-        return fn()
-    return fn
-
-
-def plugin(_version: str):
+def plugin(_version: str) -> type[CatsPlugin]:
     """Plugin for MyPy Typechecking of Cats"""
     return CatsPlugin
-
-
-def make_optional(typ: Type):
-    return UnionType.make_union([typ, NoneTyp()])
 
 
 class CatsPlugin(Plugin):
     """A plugin to make MyPy understand Cats"""
 
-    def get_class_decorator_hook(
-        self, fullname: str
-    ) -> ty.Optional[ty.Callable[[ClassDefContext], None]]:
+    @override
+    def get_class_decorator_hook(self, fullname: str) -> Callable[..., None] | None:
         """One of the MyPy Plugin defined entry points"""
+        if fullname not in _CAT_FULLNAMES:
+            return None
 
-        def add_struc_and_unstruc_to_classdefcontext(cls_def_ctx: ClassDefContext):
-            """This MyPy hook tells MyPy that struc and unstruc will be present on a Cat"""
-
-            dict_type = cls_def_ctx.api.named_type("builtins.dict")
-            str_type = cls_def_ctx.api.named_type("builtins.str")
-            bool_type = cls_def_ctx.api.named_type("builtins.bool")
-            api = cls_def_ctx.api
-            implicit_any = AnyType(TypeOfAny.special_form)
-            mapping = api.lookup_fully_qualified_or_none("typing.Mapping")
-            if not mapping or not mapping.node:
-                api.defer()
-                return
-
-            mapping_str_any_type = Instance(
-                mapping.node,  # type: ignore # i don't understand this one but it works
-                [str_type, implicit_any],
+        def add_cat_methods(ctx: ClassDefContext) -> None:
+            any_type = AnyType(TypeOfAny.special_form)
+            str_type = ctx.api.named_type("builtins.str")
+            bool_type = ctx.api.named_type("builtins.bool")
+            dict_type = ctx.api.named_type("builtins.dict", [str_type, any_type])
+            mapping_type = ctx.api.named_type(
+                "collections.abc.Mapping", [str_type, any_type]
             )
-            maybe_mapping_str_any_type = make_optional(mapping_str_any_type)
+            optional_mapping_type = UnionType([mapping_type, NoneType()])
+            cls_type = fill_typevars(ctx.cls.info)
 
-            if fullname == CAT_PATH:
-                attr_class_maker_callback(
-                    cls_def_ctx, True
-                )  # since a Cat is also an attr.s class...
-                info = cls_def_ctx.cls.info
-                cat_return_type = fill_typevars(info)
-                maybe_cat_return_type = make_optional(cat_return_type)
+            d_arg = Argument(Var("d", mapping_type), mapping_type, None, ARG_POS)
+            d_opt_arg = Argument(
+                Var("d", optional_mapping_type), optional_mapping_type, None, ARG_POS
+            )
+            strip_arg = Argument(
+                Var("strip_defaults", bool_type), bool_type, None, ARG_NAMED_OPT
+            )
 
-                if STRUCTURE_NAME not in info.names:
-                    add_static_method(
-                        cls_def_ctx,
-                        STRUCTURE_NAME,
-                        [
-                            Argument(
-                                Var("d", mapping_str_any_type),
-                                mapping_str_any_type,
-                                None,
-                                ARG_POS,
-                            )
-                        ],
-                        cat_return_type,
-                    )
-                if TRY_STRUCTURE_NAME not in info.names:
-                    add_static_method(
-                        cls_def_ctx,
-                        TRY_STRUCTURE_NAME,
-                        [
-                            Argument(
-                                Var("d", maybe_mapping_str_any_type),
-                                maybe_mapping_str_any_type,
-                                None,
-                                ARG_POS,
-                            )
-                        ],
-                        maybe_cat_return_type,
-                    )
-                if UNSTRUCTURE_NAME not in info.names:
-                    add_method(
-                        cls_def_ctx,
-                        UNSTRUCTURE_NAME,
-                        [
-                            Argument(
-                                Var("strip_defaults", bool_type),
-                                bool_type,
-                                None,
-                                ARG_NAMED_OPT,
-                            )
-                        ],
-                        dict_type,
-                    )
+            add_method(
+                ctx, "struc", args=[d_arg], return_type=cls_type, is_classmethod=True
+            )
+            add_method(
+                ctx,
+                "try_struc",
+                args=[d_opt_arg],
+                return_type=UnionType([cls_type, NoneType()]),
+                is_classmethod=True,
+            )
+            add_method(ctx, "unstruc", args=[strip_arg], return_type=dict_type)
 
-        if fullname == CAT_PATH:
-            return add_struc_and_unstruc_to_classdefcontext
-        return None
-
-
-def serialize_info_name(info: TypeInfo, name: str, class_path: str) -> ty.Dict[str, ty.Any]:
-    slzed = info.names[name].serialize(class_path, name)
-    return slzed
-
-
-def deserialize_funcdefs(stmts):
-    return [FuncDef.deserialize(stmt) for stmt in stmts if stmt[".class"] == "FuncDef"]
-
-
-def add_static_method(ctx, function_name: str, args: ty.List[Argument], return_type: Type) -> None:
-    """Mostly copied from mypy.plugins.common, with changes to make it work for a static method."""
-    info = ctx.cls.info
-    function_type = ctx.api.named_type("builtins.function")
-
-    arg_types, arg_names, arg_kinds = [], [], []
-    for arg in args:
-        assert arg.type_annotation, "All arguments must be fully typed."
-        arg_types.append(arg.type_annotation)
-        arg_names.append(nameit(arg.variable))
-        arg_kinds.append(arg.kind)
-
-    signature = CallableType(arg_types, arg_kinds, arg_names, return_type, function_type)
-
-    func = FuncDef(function_name, args, Block([PassStmt()]))
-    func.is_static = True
-    func.info = info
-    func.type = set_callable_name(signature, func)
-    func._fullname = fullname(info) + "." + function_name
-    func.line = info.line
-
-    info.names[function_name] = SymbolTableNode(MDEF, func, plugin_generated=True)
-    info.defn.defs.body.append(func)
+        return add_cat_methods

@@ -58,7 +58,7 @@ def test_wildcats():
         wrapped.wildcat["adjust"] = 88
 
     wc = MyWildcat.struc(dwc)
-    assert type(wc) == MyWildcat
+    assert isinstance(wc, MyWildcat)
     print(wc)
     wc["favorite_color"] = "green"
     print(wc)
@@ -247,6 +247,20 @@ def test_wildcat_struc_with_non_wildcat_does_not_work():
 
 
 @pytest.mark.skipif(sys.version_info < (3, 9), reason="fails on python < 3.9")
+def test_is_wildcat_with_parameterized_generic():
+    from typecats.wildcat import is_wildcat
+
+    T = ty.TypeVar("T")
+
+    @Cat
+    class GenericWildcat(dict, ty.Generic[T]):
+        value: T
+
+    assert is_wildcat(GenericWildcat)
+    assert is_wildcat(GenericWildcat[int])
+    assert not is_wildcat(int)
+
+
 def test_wildcat_structure_on_parametrized_generic():
     # The wildcat.struc(CatObject) compatibility once broke with generics
 
