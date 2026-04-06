@@ -231,4 +231,6 @@ def test_eq_cross_type_does_not_raise():
     f = Field(name="test")
     df = DateField(name="test")
     assert df == f
+    assert f == df
     assert [df] == [f]
+    assert [f] == [df]
