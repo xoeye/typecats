@@ -195,3 +195,40 @@ def test_set_struc_unstruc_converter():
     via_custom = Switchable.struc({"n": 2})
     assert via_custom.n == 2
     assert via_custom.unstruc() == {"n": 2}
+
+
+def test_eq_cross_type_does_not_raise():
+    """Python 3.14 raises TypeError if NotImplemented is used in a boolean context.
+    Ensure __eq__ handles this for cross-type comparisons."""
+
+    @Cat
+    class Base:
+        name: str = ""
+
+    @Cat
+    class Other:
+        name: str = ""
+        extra: int = 0
+
+    assert Base(name="a") == Base(name="a")
+    assert Base(name="a") != Base(name="b")
+    assert Base(name="a") != Other(name="a")
+    assert Base(name="a") != "a"
+    assert Base(name="a") != 42
+
+    # Wildcat (dict-based) subclass: attrs fields match but dict.__eq__
+    # returns NotImplemented for different types. The old code did
+    # `True and NotImplemented` which raises TypeError on 3.14.
+    @Cat
+    class Field(dict):
+        name: str = ""
+        required: bool = False
+
+    @Cat
+    class DateField(Field):
+        format: str = "MM-DD-YYYY"
+
+    f = Field(name="test")
+    df = DateField(name="test")
+    assert df == f
+    assert [df] == [f]

@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.1.1
+
+Bug fixes:
+
+- Fix `__eq__` on wildcat (dict-based) `@Cat` subclasses for Python 3.14, where `NotImplemented` in a boolean context is now a `TypeError`. Parent/child wildcat equality is preserved.
+
 ## v2.1.0
 
 Adds Python 3.12–3.14 support, drops 3.10 and 3.11, and improves type inference for `@Cat` classes.
