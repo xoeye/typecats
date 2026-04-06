@@ -157,7 +157,15 @@ def mixin_wildcat_post_attrs_methods(cls):
 
     def __eq__(self, other):
         at_eq = attrs_equals(self, other)
-        return at_eq and super(cls, self).__eq__(other)
+        super_eq = super(cls, self).__eq__(other)
+
+        if at_eq is not NotImplemented and super_eq is not NotImplemented:
+            return at_eq and super_eq
+        if at_eq is not NotImplemented:
+            return at_eq
+        if super_eq is not NotImplemented:
+            return super_eq
+        return NotImplemented
 
     setattr(cls, "__eq__", __eq__)
 
