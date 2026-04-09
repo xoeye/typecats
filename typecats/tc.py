@@ -202,20 +202,26 @@ def Cat(
 
     """
 
+    def _would_attrs_produce_fields(cls) -> bool:
+        if attr.has(cls):
+            return True
+        if kwargs.get("these"):
+            return True
+        return bool(cls.__dict__.get("__annotations__", {}))
+
     def make_cat(cls: ty.Type[C]) -> ty.Type[C]:
-        # it is always safe to apply this attrs-class-making decorator,
-        # even if there's already an __attrs_attrs__ on a base class.
-        user_transformer = kwargs.get("field_transformer")
-        cls = attr.attrs(
-            cls,
-            auto_attribs=auto_attribs,
-            field_transformer=make_disallow_empties_transformer(
-                disallow_empties, user_transformer
-            ),
-            **{k: v for k, v in kwargs.items() if k != "field_transformer"},
-        )
-        if is_wildcat(cls):
-            setup_warnings_for_dangerous_dict_subclass_operations(cls)
+        if _would_attrs_produce_fields(cls):
+            user_transformer = kwargs.get("field_transformer")
+            cls = attr.attrs(
+                cls,
+                auto_attribs=auto_attribs,
+                field_transformer=make_disallow_empties_transformer(
+                    disallow_empties, user_transformer
+                ),
+                **{k: v for k, v in kwargs.items() if k != "field_transformer"},
+            )
+            if is_wildcat(cls):
+                setup_warnings_for_dangerous_dict_subclass_operations(cls)
 
         set_struc_converter(cls, converter)
         set_unstruc_converter(cls, converter)
