@@ -203,11 +203,7 @@ def Cat(
     """
 
     def _would_attrs_produce_fields(cls) -> bool:
-        if attr.has(cls):
-            return True
-        if kwargs.get("these"):
-            return True
-        return bool(cls.__dict__.get("__annotations__", {}))
+        return attr.has(cls) or bool(cls.__dict__.get("__annotations__", {}))
 
     def make_cat(cls: ty.Type[C]) -> ty.Type[C]:
         if _would_attrs_produce_fields(cls):
