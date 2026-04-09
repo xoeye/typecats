@@ -1,12 +1,13 @@
 """Utilities for using attrs types with cattrs"""
 
+import enum
 import typing as ty
 from functools import partial
 
 import attr
 import cattrs
 
-from .attrs_shim import FieldTransformer, make_disallow_empties_transformer
+from .attrs_shim import make_disallow_empties_transformer
 from .converter import TypecatsConverter
 from .wildcat import (
     mixin_wildcat_post_attrs_methods,
@@ -148,7 +149,6 @@ def Cat(
     auto_attribs: bool = ...,
     disallow_empties: bool = ...,
     converter: TypecatsConverter = ...,
-    field_transformer: FieldTransformer | None = None,
     **kwargs: ty.Any,
 ) -> ty.Type[C]: ...
 
@@ -166,7 +166,6 @@ def Cat(
     auto_attribs: bool = ...,
     disallow_empties: bool = ...,
     converter: TypecatsConverter = ...,
-    field_transformer: FieldTransformer | None = None,
     **kwargs: ty.Any,
 ) -> ty.Callable[[ty.Type[C]], ty.Type[C]]: ...
 
@@ -176,7 +175,6 @@ def Cat(
     auto_attribs=True,
     disallow_empties=True,
     converter: TypecatsConverter = _TYPECATS_DEFAULT_CONVERTER,
-    field_transformer: FieldTransformer | None = None,
     **kwargs,
 ):
     """A Cat knows how to take care of itself.
@@ -205,21 +203,32 @@ def Cat(
 
     """
 
-    def _would_attrs_produce_fields(cls) -> bool:
-        return attr.has(cls) or bool(cls.__dict__.get("__annotations__", {}))
+    # Classes that are incompatible with attr.attrs() when they have no fields.
+    # Enum: attrs generates __call__(**{}) but EnumType.__call__ requires a value arg.
+    _SKIP_ATTRS_IF_FIELDLESS = (enum.Enum,)
+
+    def _skip_attrs(cls) -> bool:
+        return issubclass(cls, _SKIP_ATTRS_IF_FIELDLESS) and not (
+            attr.has(cls) or cls.__dict__.get("__annotations__")
+        )
 
     def make_cat(cls: ty.Type[C]) -> ty.Type[C]:
-        if _would_attrs_produce_fields(cls):
-            cls = attr.attrs(
-                cls,
-                auto_attribs=auto_attribs,
-                field_transformer=make_disallow_empties_transformer(
-                    disallow_empties, field_transformer
-                ),
-                **kwargs,
-            )
-            if is_wildcat(cls):
-                setup_warnings_for_dangerous_dict_subclass_operations(cls)
+        if _skip_attrs(cls):
+            set_struc_converter(cls, converter)
+            set_unstruc_converter(cls, converter)
+            return cls
+
+        user_transformer = kwargs.get("field_transformer")
+        cls = attr.attrs(
+            cls,
+            auto_attribs=auto_attribs,
+            field_transformer=make_disallow_empties_transformer(
+                disallow_empties, user_transformer
+            ),
+            **{k: v for k, v in kwargs.items() if k != "field_transformer"},
+        )
+        if is_wildcat(cls):
+            setup_warnings_for_dangerous_dict_subclass_operations(cls)
 
         set_struc_converter(cls, converter)
         set_unstruc_converter(cls, converter)
