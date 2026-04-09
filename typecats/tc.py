@@ -6,7 +6,7 @@ from functools import partial
 import attr
 import cattrs
 
-from .attrs_shim import make_disallow_empties_transformer
+from .attrs_shim import FieldTransformer, make_disallow_empties_transformer
 from .converter import TypecatsConverter
 from .wildcat import (
     mixin_wildcat_post_attrs_methods,
@@ -148,6 +148,7 @@ def Cat(
     auto_attribs: bool = ...,
     disallow_empties: bool = ...,
     converter: TypecatsConverter = ...,
+    field_transformer: FieldTransformer | None = None,
     **kwargs: ty.Any,
 ) -> ty.Type[C]: ...
 
@@ -165,6 +166,7 @@ def Cat(
     auto_attribs: bool = ...,
     disallow_empties: bool = ...,
     converter: TypecatsConverter = ...,
+    field_transformer: FieldTransformer | None = None,
     **kwargs: ty.Any,
 ) -> ty.Callable[[ty.Type[C]], ty.Type[C]]: ...
 
@@ -174,6 +176,7 @@ def Cat(
     auto_attribs=True,
     disallow_empties=True,
     converter: TypecatsConverter = _TYPECATS_DEFAULT_CONVERTER,
+    field_transformer: FieldTransformer | None = None,
     **kwargs,
 ):
     """A Cat knows how to take care of itself.
@@ -207,14 +210,13 @@ def Cat(
 
     def make_cat(cls: ty.Type[C]) -> ty.Type[C]:
         if _would_attrs_produce_fields(cls):
-            user_transformer = kwargs.get("field_transformer")
             cls = attr.attrs(
                 cls,
                 auto_attribs=auto_attribs,
                 field_transformer=make_disallow_empties_transformer(
-                    disallow_empties, user_transformer
+                    disallow_empties, field_transformer
                 ),
-                **{k: v for k, v in kwargs.items() if k != "field_transformer"},
+                **kwargs,
             )
             if is_wildcat(cls):
                 setup_warnings_for_dangerous_dict_subclass_operations(cls)
