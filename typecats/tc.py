@@ -205,12 +205,10 @@ def Cat(
 
     # Classes that are incompatible with attr.attrs() when they have no fields.
     # Enum: attrs generates __call__(**{}) but EnumType.__call__ requires a value arg.
-    _SKIP_ATTRS_IF_FIELDLESS = (enum.Enum,)
+    _CLASSES_INCOMPATIBLE_WITH_ATTRS = (enum.Enum,)
 
     def _skip_attrs(cls) -> bool:
-        return issubclass(cls, _SKIP_ATTRS_IF_FIELDLESS) and not (
-            attr.has(cls) or cls.__dict__.get("__annotations__")
-        )
+        return issubclass(cls, _CLASSES_INCOMPATIBLE_WITH_ATTRS)
 
     def make_cat(cls: ty.Type[C]) -> ty.Type[C]:
         if _skip_attrs(cls):

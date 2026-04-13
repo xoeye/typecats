@@ -620,3 +620,21 @@ def test_cat_enum_with_int_values():
     obj = Record.struc({"status": 1})
     assert obj.status is Status.ACTIVE
     assert obj.unstruc() == {"status": 1}
+
+
+def test_cat_enum_with_annotations_structures_by_value():
+    """A @Cat Enum with annotated members must still structure by value."""
+    from enum import Enum
+
+    @Cat
+    class AnnotatedEnum(Enum):
+        A: str = "a"
+        B: str = "b"
+
+    @Cat
+    class Container:
+        value: AnnotatedEnum
+
+    obj = Container.struc({"value": "a"})
+    assert obj.value is AnnotatedEnum.A
+    assert obj.unstruc() == {"value": "a"}
