@@ -1,5 +1,6 @@
 """Utilities for using attrs types with cattrs"""
 
+import enum
 import typing as ty
 from functools import partial
 
@@ -202,9 +203,19 @@ def Cat(
 
     """
 
+    _CLASSES_INCOMPATIBLE_WITH_ATTRS = (
+        enum.Enum,  # attrs generates __call__(**{}) but EnumType.__call__ requires a value arg.
+    )
+
+    def _skip_attrs(cls) -> bool:
+        return issubclass(cls, _CLASSES_INCOMPATIBLE_WITH_ATTRS)
+
     def make_cat(cls: ty.Type[C]) -> ty.Type[C]:
-        # it is always safe to apply this attrs-class-making decorator,
-        # even if there's already an __attrs_attrs__ on a base class.
+        if _skip_attrs(cls):
+            set_struc_converter(cls, converter)
+            set_unstruc_converter(cls, converter)
+            return cls
+
         user_transformer = kwargs.get("field_transformer")
         cls = attr.attrs(
             cls,

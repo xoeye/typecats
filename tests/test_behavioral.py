@@ -536,3 +536,105 @@ def test_module_unstruc_and_method_unstruc_are_equivalent():
 
     obj = Thing("hello", 7)
     assert unstruc(obj) == obj.unstruc()
+
+
+# ---------------------------------------------------------------------------
+# Enum structuring
+# ---------------------------------------------------------------------------
+
+
+def test_cat_enum_structures_by_value():
+    """A @Cat Enum field must structure from its string value."""
+    from enum import Enum
+
+    @Cat
+    class Color(Enum):
+        RED = "RED"
+        GREEN = "GREEN"
+        BLUE = "BLUE"
+
+    @Cat
+    class Palette:
+        color: Color
+
+    obj = Palette.struc({"color": "GREEN"})
+    assert obj.color is Color.GREEN
+    assert obj.unstruc() == {"color": "GREEN"}
+
+
+def test_cat_enum_structures_nested_in_cat():
+    """Enum used as a field type in a nested @Cat class must round-trip."""
+    from enum import Enum
+
+    @Cat
+    class SortDateType(Enum):
+        CREATED_AT = "CREATED_AT"
+        COMPLETED_AT = "COMPLETED_AT"
+
+    @Cat
+    class DateQueryInput:
+        type: SortDateType
+
+    @Cat
+    class ListInput:
+        limit: int = 10
+        date_query: ty.Optional[DateQueryInput] = None
+
+    obj = ListInput.struc({"limit": 5, "date_query": {"type": "COMPLETED_AT"}})
+    assert obj.date_query is not None
+    assert obj.date_query.type is SortDateType.COMPLETED_AT
+    assert obj.unstruc() == {"limit": 5, "date_query": {"type": "COMPLETED_AT"}}
+
+
+def test_non_cat_enum_structures_in_cat_class():
+    """A plain (non-@Cat) Enum used as a field type must also structure correctly."""
+    from enum import Enum
+
+    class Priority(Enum):
+        LOW = "LOW"
+        HIGH = "HIGH"
+
+    @Cat
+    class Task:
+        name: str
+        priority: Priority
+
+    obj = Task.struc({"name": "fix bug", "priority": "HIGH"})
+    assert obj.priority is Priority.HIGH
+
+
+def test_cat_enum_with_int_values():
+    """@Cat Enum with integer values must structure from int."""
+    from enum import Enum
+
+    @Cat
+    class Status(Enum):
+        PENDING = 0
+        ACTIVE = 1
+        CLOSED = 2
+
+    @Cat
+    class Record:
+        status: Status
+
+    obj = Record.struc({"status": 1})
+    assert obj.status is Status.ACTIVE
+    assert obj.unstruc() == {"status": 1}
+
+
+def test_cat_enum_with_annotations_structures_by_value():
+    """A @Cat Enum with annotated members must still structure by value."""
+    from enum import Enum
+
+    @Cat
+    class AnnotatedEnum(Enum):
+        A: str = "a"
+        B: str = "b"
+
+    @Cat
+    class Container:
+        value: AnnotatedEnum
+
+    obj = Container.struc({"value": "a"})
+    assert obj.value is AnnotatedEnum.A
+    assert obj.unstruc() == {"value": "a"}
