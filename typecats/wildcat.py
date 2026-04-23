@@ -3,10 +3,8 @@
 import typing as ty
 import logging
 
-import attr
 from attr import has as is_attrs_class
 from cattrs import Converter
-from typing_extensions import TypeIs
 
 from .attrs_shim import get_attrs_names
 
@@ -17,17 +15,7 @@ MWC = ty.TypeVar("MWC", bound=ty.MutableMapping)
 WC = ty.TypeVar("WC", bound=ty.Mapping)
 
 
-@ty.overload
-def is_wildcat(cls_or_obj: type) -> bool: ...
-@ty.overload
-def is_wildcat(cls_or_obj: object) -> TypeIs[attr.AttrsInstance]: ...
-
-
-def is_wildcat(cls_or_obj: object) -> bool:
-    if isinstance(cls_or_obj, type):
-        cls = cls_or_obj
-    else:
-        cls = type(cls_or_obj)
+def is_wildcat(cls: object) -> bool:
     core = ty.get_origin(cls) or cls
     if not isinstance(core, type):
         return False

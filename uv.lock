@@ -524,7 +524,6 @@ source = { editable = "." }
 dependencies = [
     { name = "attrs" },
     { name = "cattrs" },
-    { name = "typing-extensions" },
 ]
 
 [package.dev-dependencies]
@@ -542,7 +541,6 @@ dev = [
 requires-dist = [
     { name = "attrs", specifier = ">=25.4.0,<27.0.0" },
     { name = "cattrs", specifier = ">=26.1.0,<27.0.0" },
-    { name = "typing-extensions", specifier = ">=4.10.0" },
 ]
 
 [package.metadata.requires-dev]
