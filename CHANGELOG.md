@@ -12,6 +12,13 @@ Dependencies:
 
 - Added `typing_extensions >=4.10.0`
 
+
+## v2.1.2
+
+Bug fixes:
+
+- Fix `@Cat`-decorated `enum.Enum` subclasses failing to structure/unstructure on Python 3.12+. `attr.attrs()` is incompatible with `enum.Enum` (`EnumType.__call__` requires a value argument), so `@Cat` now skips the attrs wrapping for enum classes and registers only the structuring/unstructuring converters.
+
 ## v2.1.1
 
 Bug fixes:
