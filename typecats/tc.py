@@ -9,7 +9,6 @@ import cattrs
 from .attrs_shim import make_disallow_empties_transformer
 from .constants import CLASSES_INCOMPATIBLE_WITH_ATTRS
 from .converter import TypecatsConverter
-from .coerce import make_coerce_hook
 from .wildcat import (
     mixin_wildcat_post_attrs_methods,
     setup_warnings_for_dangerous_dict_subclass_operations,
@@ -24,14 +23,6 @@ from .exceptions import (
 )
 from .strip_defaults import ShouldStripDefaults
 from .stack_context import stack_context
-
-
-def _is_frozen(cls: type, kwargs: dict[str, ty.Any]) -> bool:
-    """Check if the resulting attrs class will be frozen."""
-    if kwargs.get("frozen", False):
-        return True
-    props = getattr(cls, "__attrs_props__", None)
-    return props is not None and props.is_frozen
 
 
 class TypeCat:
@@ -222,28 +213,13 @@ def Cat(
             return cls
 
         user_transformer = kwargs.get("field_transformer")
-        is_frozen = _is_frozen(cls, kwargs)
-        passthrough_kwargs = {
-            k: v
-            for k, v in kwargs.items()
-            if k not in ("field_transformer", "on_setattr")
-        }
-        if not is_frozen:
-            user_on_setattr = kwargs.get("on_setattr")
-            coerce_hook = make_coerce_hook(converter)
-            passthrough_kwargs["on_setattr"] = (
-                attr.setters.pipe(coerce_hook, user_on_setattr)
-                if user_on_setattr is not None
-                and user_on_setattr is not attr.setters.NO_OP
-                else coerce_hook
-            )
         cls = attr.attrs(
             cls,
             auto_attribs=auto_attribs,
             field_transformer=make_disallow_empties_transformer(
                 disallow_empties, user_transformer
             ),
-            **passthrough_kwargs,
+            **{k: v for k, v in kwargs.items() if k != "field_transformer"},
         )
         if is_wildcat(cls):
             setup_warnings_for_dangerous_dict_subclass_operations(cls)
