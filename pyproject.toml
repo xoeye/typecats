@@ -2,7 +2,7 @@
 name = "typecats"
 description = "Structure unstructured data for the purpose of static type checking"
 authors = [{name = "Peter Gaultney", email = "pgaultney@xoi.io"}]
-version = "2.2.0"
+version = "2.3.0"
 requires-python = ">=3.12,<3.15"
 license = "MIT"
 license-files = ["LICENSE"]

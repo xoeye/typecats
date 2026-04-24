@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.3.0
+
+New features:
+
+- **Coerce on setattr** — `@Cat` fields auto-coerce mismatched values through the cattrs converter on assignment, preventing `unstruc()` crashes under cattrs 26+. Frozen classes are unaffected.
+
 ## v2.2.0
 
 New features:
