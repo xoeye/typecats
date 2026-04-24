@@ -1,6 +1,5 @@
 """Utilities for using attrs types with cattrs"""
 
-import enum
 import typing as ty
 from functools import partial
 
@@ -8,6 +7,7 @@ import attr
 import cattrs
 
 from .attrs_shim import make_disallow_empties_transformer
+from .constants import CLASSES_INCOMPATIBLE_WITH_ATTRS
 from .converter import TypecatsConverter
 from .wildcat import (
     mixin_wildcat_post_attrs_methods,
@@ -23,10 +23,6 @@ from .exceptions import (
 )
 from .strip_defaults import ShouldStripDefaults
 from .stack_context import stack_context
-
-CLASSES_INCOMPATIBLE_WITH_ATTRS: ty.Final = (
-    enum.Enum,  # attrs generates __call__(**{}) but EnumType.__call__ requires a value arg.
-)
 
 
 class TypeCat:

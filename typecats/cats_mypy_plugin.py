@@ -28,6 +28,8 @@ from mypy.nodes import (  # pylint: disable=no-name-in-module
     ARG_NAMED_OPT,
     ARG_POS,
     Argument,
+    CallExpr,
+    NameExpr,
     Var,
 )
 from mypy.plugin import ClassDefContext, Plugin  # pylint: disable=no-name-in-module
@@ -35,10 +37,7 @@ from mypy.plugins.attrs import (  # pylint: disable=no-name-in-module
     attr_class_maker_callback,
     attr_tag_callback,
 )
-from mypy.plugins.common import (  # pylint: disable=no-name-in-module
-    _get_decorator_bool_argument,
-    add_method,
-)
+from mypy.plugins.common import add_method  # pylint: disable=no-name-in-module
 from mypy.typeops import fill_typevars  # pylint: disable=no-name-in-module
 from mypy.types import (  # pylint: disable=no-name-in-module
     AnyType,
@@ -47,7 +46,7 @@ from mypy.types import (  # pylint: disable=no-name-in-module
     UnionType,
 )
 
-from typecats.tc import CLASSES_INCOMPATIBLE_WITH_ATTRS
+from typecats.constants import CLASSES_INCOMPATIBLE_WITH_ATTRS
 
 _CAT_FULLNAMES = frozenset(
     {
@@ -97,6 +96,23 @@ def _cat_tag_callback(ctx: ClassDefContext) -> None:
         attr_tag_callback(ctx)
 
 
+def _get_bool_kwarg(ctx: ClassDefContext, name: str, default: bool) -> bool:
+    """Extract a boolean keyword argument from a decorator call.
+
+    Returns default if the decorator was applied without parentheses
+    (@Cat) or the argument was not provided (@Cat(other=...)).
+    """
+    if not isinstance(ctx.reason, CallExpr):
+        return default
+    for arg_name, arg_expr in zip(ctx.reason.arg_names, ctx.reason.args):
+        if arg_name == name and isinstance(arg_expr, NameExpr):
+            if arg_expr.fullname == "builtins.True":
+                return True
+            if arg_expr.fullname == "builtins.False":
+                return False
+    return default
+
+
 def _cat_class_maker_callback(ctx: ClassDefContext) -> bool:
     """Run the attrs plugin for @Cat classes, then add Cat-specific methods.
 
@@ -109,7 +125,7 @@ def _cat_class_maker_callback(ctx: ClassDefContext) -> bool:
         _add_cat_methods(ctx)
         return True
 
-    auto_attribs = _get_decorator_bool_argument(ctx, "auto_attribs", True)
+    auto_attribs = _get_bool_kwarg(ctx, "auto_attribs", True)
     ok = attr_class_maker_callback(ctx, auto_attribs_default=auto_attribs)
     if ok:
         _add_cat_methods(ctx)
