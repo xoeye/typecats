@@ -103,6 +103,38 @@ class TestWildcatCoercion:
         assert isinstance(fu.last_updated_on, datetime)
 
 
+class TestSubscriptedGenericFields:
+    def test_dict_field_with_generic_type_is_not_coerced(self):
+        @Cat
+        class Container:
+            data: ty.Dict[str, ty.Optional[int]] = attr.Factory(dict)
+
+        c = Container()
+        d = {"a": 1, "b": None}
+        c.data = d
+        assert c.data is d
+
+    def test_list_field_with_generic_type_is_not_coerced(self):
+        @Cat
+        class Container:
+            items: ty.List[ty.Optional[str]] = attr.Factory(list)
+
+        c = Container()
+        items = ["a", None, "b"]
+        c.items = items
+        assert c.items is items
+
+    def test_unstruc_works_with_generic_fields(self):
+        @Cat
+        class Container:
+            data: ty.Dict[str, int] = attr.Factory(dict)
+
+        c = Container()
+        c.data = {"x": 1}
+        result = c.unstruc()
+        assert result == {"data": {"x": 1}}
+
+
 class TestFrozenCatIsUnaffected:
     def test_frozen_cat_still_rejects_setattr(self):
         @Cat(frozen=True)

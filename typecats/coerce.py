@@ -40,7 +40,13 @@ def make_coerce_hook(
         inner = _unwrap_optional(field_type)
         check_type = inner if inner is not None else field_type
 
-        if isinstance(new_value, check_type):
+        # Subscripted generics (e.g. Dict[str, X]) can't be used with isinstance.
+        # Use the origin type for the check, or skip if there is none.
+        origin = ty.get_origin(check_type)
+        if origin is not None:
+            if isinstance(new_value, origin):
+                return new_value
+        elif isinstance(check_type, type) and isinstance(new_value, check_type):
             return new_value
 
         return converter.structure(new_value, check_type)

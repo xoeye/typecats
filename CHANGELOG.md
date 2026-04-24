@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.3.1
+
+Bug fixes:
+
+- Fix `TypeError` in coerce hook for fields annotated with subscripted generics (e.g. `Dict[str, Optional[X]]`).
+
 ## v2.3.0
 
 New features:
