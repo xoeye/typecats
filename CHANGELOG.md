@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.4.0
+
+Replaces v2.3.x. The on_setattr coercion approach in 2.3.0–2.3.2 changed assignment behavior and introduced regressions. **Skip 2.3.x entirely.**
+
+Bug fixes:
+
+- Restore cattrs 22 behavior for `Optional` field unstructure. Override `gen_unstructure_optional` to dispatch by runtime type instead of declared type, so mismatched values (e.g. `str` in `Optional[datetime]`) pass through instead of crashing.
+- Remove `on_setattr` coercion hook (introduced in 2.3.0) which caused `ValueError` on frozen inheritance, `TypeError` on generic fields, and silent data corruption on container fields.
+
 ## v2.3.2
 
 Bug fixes:

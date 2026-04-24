@@ -79,6 +79,26 @@ class TypecatsConverter(GenConverter):
 
         return unstructure_with_extras
 
+    def gen_unstructure_optional(self, cl: type) -> ty.Callable:
+        """Restore cattrs 22 runtime-dispatch behavior for Optional fields.
+
+        cattrs 26 resolves the unstructure hook for the declared inner type at
+        class-definition time and bakes it into the generated function. This
+        means Optional[datetime] always calls the datetime hook, even when the
+        actual value is a str — which crashes.
+
+        cattrs 22 used _unstructure_union, which dispatched by the value's
+        runtime type. We restore that behavior here so that mismatched types
+        pass through unchanged, exactly as they did before.
+        """
+
+        def unstructure_optional(val: ty.Any) -> ty.Any:
+            if val is None:
+                return None
+            return self.get_unstructure_hook(val.__class__)(val)
+
+        return unstructure_optional
+
     def unstructure(
         self,
         obj: ty.Any,
