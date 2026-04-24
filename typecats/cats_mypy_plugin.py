@@ -5,6 +5,10 @@ fully understood as attrs classes (field reordering, frozen semantics,
 AttrsInstance protocol, __attrs_attrs__, etc.), then layers on the
 .struc(), .try_struc(), and .unstruc() method signatures.
 
+The runtime @Cat decorator skips attrs processing for certain base
+classes (e.g. enum.Enum). The plugin mirrors this by deriving the
+skip list from the same CLASSES_INCOMPATIBLE_WITH_ATTRS constant.
+
 To enable, add to your pyproject.toml:
 
     [tool.mypy]
@@ -31,7 +35,10 @@ from mypy.plugins.attrs import (  # pylint: disable=no-name-in-module
     attr_class_maker_callback,
     attr_tag_callback,
 )
-from mypy.plugins.common import add_method  # pylint: disable=no-name-in-module
+from mypy.plugins.common import (  # pylint: disable=no-name-in-module
+    _get_decorator_bool_argument,
+    add_method,
+)
 from mypy.typeops import fill_typevars  # pylint: disable=no-name-in-module
 from mypy.types import (  # pylint: disable=no-name-in-module
     AnyType,
@@ -40,11 +47,17 @@ from mypy.types import (  # pylint: disable=no-name-in-module
     UnionType,
 )
 
+from typecats.tc import CLASSES_INCOMPATIBLE_WITH_ATTRS
+
 _CAT_FULLNAMES = frozenset(
     {
         "typecats.Cat",
         "typecats.tc.Cat",
     },
+)
+
+_SKIP_ATTRS_FULLNAMES = frozenset(
+    f"{cls.__module__}.{cls.__qualname__}" for cls in CLASSES_INCOMPATIBLE_WITH_ATTRS
 )
 
 
@@ -57,7 +70,7 @@ class CatsPlugin(Plugin):
         self, fullname: str
     ) -> Callable[[ClassDefContext], None] | None:
         if fullname in _CAT_FULLNAMES:
-            return attr_tag_callback
+            return _cat_tag_callback
         return None
 
     def get_class_decorator_hook_2(
@@ -68,9 +81,36 @@ class CatsPlugin(Plugin):
         return None
 
 
+def _should_skip_attrs(ctx: ClassDefContext) -> bool:
+    """Check whether the class inherits from a base that is incompatible
+    with attrs, mirroring the runtime _skip_attrs check in tc.py."""
+    for info in ctx.cls.info.mro:
+        if info.fullname in _SKIP_ATTRS_FULLNAMES:
+            return True
+    return False
+
+
+def _cat_tag_callback(ctx: ClassDefContext) -> None:
+    """Tag @Cat classes for the attrs plugin, unless they inherit from
+    an incompatible base (e.g. Enum)."""
+    if not _should_skip_attrs(ctx):
+        attr_tag_callback(ctx)
+
+
 def _cat_class_maker_callback(ctx: ClassDefContext) -> bool:
-    """Run the attrs plugin first, then add Cat-specific methods."""
-    ok = attr_class_maker_callback(ctx, auto_attribs_default=True)
+    """Run the attrs plugin for @Cat classes, then add Cat-specific methods.
+
+    The auto_attribs argument is extracted from the decorator call when
+    present, defaulting to True (matching the runtime @Cat default).
+    Classes that inherit from incompatible bases (e.g. Enum) skip the
+    attrs plugin entirely but still get struc/try_struc/unstruc.
+    """
+    if _should_skip_attrs(ctx):
+        _add_cat_methods(ctx)
+        return True
+
+    auto_attribs = _get_decorator_bool_argument(ctx, "auto_attribs", True)
+    ok = attr_class_maker_callback(ctx, auto_attribs_default=auto_attribs)
     if ok:
         _add_cat_methods(ctx)
     return ok

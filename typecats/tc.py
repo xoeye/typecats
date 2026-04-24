@@ -24,6 +24,10 @@ from .exceptions import (
 from .strip_defaults import ShouldStripDefaults
 from .stack_context import stack_context
 
+CLASSES_INCOMPATIBLE_WITH_ATTRS: ty.Final = (
+    enum.Enum,  # attrs generates __call__(**{}) but EnumType.__call__ requires a value arg.
+)
+
 
 class TypeCat:
     """Base class that documents the interface added by the @Cat decorator.
@@ -203,12 +207,8 @@ def Cat(
 
     """
 
-    _CLASSES_INCOMPATIBLE_WITH_ATTRS = (
-        enum.Enum,  # attrs generates __call__(**{}) but EnumType.__call__ requires a value arg.
-    )
-
     def _skip_attrs(cls) -> bool:
-        return issubclass(cls, _CLASSES_INCOMPATIBLE_WITH_ATTRS)
+        return issubclass(cls, CLASSES_INCOMPATIBLE_WITH_ATTRS)
 
     def make_cat(cls: ty.Type[C]) -> ty.Type[C]:
         if _skip_attrs(cls):
