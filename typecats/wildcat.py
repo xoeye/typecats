@@ -5,6 +5,7 @@ import logging
 
 from attr import has as is_attrs_class
 from cattrs import Converter
+
 from .attrs_shim import get_attrs_names
 
 logger = logging.getLogger(__name__)

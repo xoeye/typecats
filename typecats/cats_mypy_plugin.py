@@ -1,7 +1,13 @@
 """Mypy plugin for typecats.
 
-Adds .struc(), .try_struc(), and .unstruc() method signatures to all
-@Cat-decorated classes so mypy understands their types.
+Delegates to mypy's built-in attrs plugin so that @Cat classes are
+fully understood as attrs classes (field reordering, frozen semantics,
+AttrsInstance protocol, __attrs_attrs__, etc.), then layers on the
+.struc(), .try_struc(), and .unstruc() method signatures.
+
+The runtime @Cat decorator skips attrs processing for certain base
+classes (e.g. enum.Enum). The plugin mirrors this by deriving the
+skip list from the same CLASSES_INCOMPATIBLE_WITH_ATTRS constant.
 
 To enable, add to your pyproject.toml:
 
@@ -17,15 +23,20 @@ Or to mypy.ini:
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import override
 
 from mypy.nodes import (  # pylint: disable=no-name-in-module
     ARG_NAMED_OPT,
     ARG_POS,
     Argument,
+    CallExpr,
+    NameExpr,
     Var,
 )
 from mypy.plugin import ClassDefContext, Plugin  # pylint: disable=no-name-in-module
+from mypy.plugins.attrs import (  # pylint: disable=no-name-in-module
+    attr_class_maker_callback,
+    attr_tag_callback,
+)
 from mypy.plugins.common import add_method  # pylint: disable=no-name-in-module
 from mypy.typeops import fill_typevars  # pylint: disable=no-name-in-module
 from mypy.types import (  # pylint: disable=no-name-in-module
@@ -35,6 +46,8 @@ from mypy.types import (  # pylint: disable=no-name-in-module
     UnionType,
 )
 
+from typecats.constants import CLASSES_INCOMPATIBLE_WITH_ATTRS
+
 _CAT_FULLNAMES = frozenset(
     {
         "typecats.Cat",
@@ -42,50 +55,106 @@ _CAT_FULLNAMES = frozenset(
     },
 )
 
+_SKIP_ATTRS_FULLNAMES = frozenset(
+    f"{cls.__module__}.{cls.__qualname__}" for cls in CLASSES_INCOMPATIBLE_WITH_ATTRS
+)
+
 
 def plugin(_version: str) -> type[CatsPlugin]:
-    """Plugin for MyPy Typechecking of Cats"""
     return CatsPlugin
 
 
 class CatsPlugin(Plugin):
-    """A plugin to make MyPy understand Cats"""
+    def get_class_decorator_hook(
+        self, fullname: str
+    ) -> Callable[[ClassDefContext], None] | None:
+        if fullname in _CAT_FULLNAMES:
+            return _cat_tag_callback
+        return None
 
-    @override
-    def get_class_decorator_hook(self, fullname: str) -> Callable[..., None] | None:
-        """One of the MyPy Plugin defined entry points"""
-        if fullname not in _CAT_FULLNAMES:
-            return None
+    def get_class_decorator_hook_2(
+        self, fullname: str
+    ) -> Callable[[ClassDefContext], bool] | None:
+        if fullname in _CAT_FULLNAMES:
+            return _cat_class_maker_callback
+        return None
 
-        def add_cat_methods(ctx: ClassDefContext) -> None:
-            any_type = AnyType(TypeOfAny.special_form)
-            str_type = ctx.api.named_type("builtins.str")
-            bool_type = ctx.api.named_type("builtins.bool")
-            dict_type = ctx.api.named_type("builtins.dict", [str_type, any_type])
-            mapping_type = ctx.api.named_type(
-                "collections.abc.Mapping", [str_type, any_type]
-            )
-            optional_mapping_type = UnionType([mapping_type, NoneType()])
-            cls_type = fill_typevars(ctx.cls.info)
 
-            d_arg = Argument(Var("d", mapping_type), mapping_type, None, ARG_POS)
-            d_opt_arg = Argument(
-                Var("d", optional_mapping_type), optional_mapping_type, None, ARG_POS
-            )
-            strip_arg = Argument(
-                Var("strip_defaults", bool_type), bool_type, None, ARG_NAMED_OPT
-            )
+def _should_skip_attrs(ctx: ClassDefContext) -> bool:
+    """Check whether the class inherits from a base that is incompatible
+    with attrs, mirroring the runtime _skip_attrs check in tc.py."""
+    for info in ctx.cls.info.mro:
+        if info.fullname in _SKIP_ATTRS_FULLNAMES:
+            return True
+    return False
 
-            add_method(
-                ctx, "struc", args=[d_arg], return_type=cls_type, is_classmethod=True
-            )
-            add_method(
-                ctx,
-                "try_struc",
-                args=[d_opt_arg],
-                return_type=UnionType([cls_type, NoneType()]),
-                is_classmethod=True,
-            )
-            add_method(ctx, "unstruc", args=[strip_arg], return_type=dict_type)
 
-        return add_cat_methods
+def _cat_tag_callback(ctx: ClassDefContext) -> None:
+    """Tag @Cat classes for the attrs plugin, unless they inherit from
+    an incompatible base (e.g. Enum)."""
+    if not _should_skip_attrs(ctx):
+        attr_tag_callback(ctx)
+
+
+def _get_bool_kwarg(ctx: ClassDefContext, name: str, default: bool) -> bool:
+    """Extract a boolean keyword argument from a decorator call.
+
+    Returns default if the decorator was applied without parentheses
+    (@Cat) or the argument was not provided (@Cat(other=...)).
+    """
+    if not isinstance(ctx.reason, CallExpr):
+        return default
+    for arg_name, arg_expr in zip(ctx.reason.arg_names, ctx.reason.args):
+        if arg_name == name and isinstance(arg_expr, NameExpr):
+            if arg_expr.fullname == "builtins.True":
+                return True
+            if arg_expr.fullname == "builtins.False":
+                return False
+    return default
+
+
+def _cat_class_maker_callback(ctx: ClassDefContext) -> bool:
+    """Run the attrs plugin for @Cat classes, then add Cat-specific methods.
+
+    The auto_attribs argument is extracted from the decorator call when
+    present, defaulting to True (matching the runtime @Cat default).
+    Classes that inherit from incompatible bases (e.g. Enum) skip the
+    attrs plugin entirely but still get struc/try_struc/unstruc.
+    """
+    if _should_skip_attrs(ctx):
+        _add_cat_methods(ctx)
+        return True
+
+    auto_attribs = _get_bool_kwarg(ctx, "auto_attribs", True)
+    ok = attr_class_maker_callback(ctx, auto_attribs_default=auto_attribs)
+    if ok:
+        _add_cat_methods(ctx)
+    return ok
+
+
+def _add_cat_methods(ctx: ClassDefContext) -> None:
+    any_type = AnyType(TypeOfAny.special_form)
+    str_type = ctx.api.named_type("builtins.str")
+    bool_type = ctx.api.named_type("builtins.bool")
+    dict_type = ctx.api.named_type("builtins.dict", [str_type, any_type])
+    mapping_type = ctx.api.named_type("collections.abc.Mapping", [str_type, any_type])
+    optional_mapping_type = UnionType([mapping_type, NoneType()])
+    cls_type = fill_typevars(ctx.cls.info)
+
+    d_arg = Argument(Var("d", mapping_type), mapping_type, None, ARG_POS)
+    d_opt_arg = Argument(
+        Var("d", optional_mapping_type), optional_mapping_type, None, ARG_POS
+    )
+    strip_arg = Argument(
+        Var("strip_defaults", bool_type), bool_type, None, ARG_NAMED_OPT
+    )
+
+    add_method(ctx, "struc", args=[d_arg], return_type=cls_type, is_classmethod=True)
+    add_method(
+        ctx,
+        "try_struc",
+        args=[d_opt_arg],
+        return_type=UnionType([cls_type, NoneType()]),
+        is_classmethod=True,
+    )
+    add_method(ctx, "unstruc", args=[strip_arg], return_type=dict_type)

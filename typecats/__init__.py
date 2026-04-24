@@ -14,10 +14,12 @@ from .tc import (
     unstruc_strip_defaults,
     set_detailed_validation_mode_not_threadsafe,
 )
+from .types import CatT
 from .wildcat import is_wildcat
 
 __all__ = [
     "Cat",
+    "CatT",
     "StructuringError",
     "set_default_exception_hook",
     "TypeCat",

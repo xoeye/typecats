@@ -1,6 +1,5 @@
 """Utilities for using attrs types with cattrs"""
 
-import enum
 import typing as ty
 from functools import partial
 
@@ -8,6 +7,7 @@ import attr
 import cattrs
 
 from .attrs_shim import make_disallow_empties_transformer
+from .constants import CLASSES_INCOMPATIBLE_WITH_ATTRS
 from .converter import TypecatsConverter
 from .wildcat import (
     mixin_wildcat_post_attrs_methods,
@@ -203,12 +203,8 @@ def Cat(
 
     """
 
-    _CLASSES_INCOMPATIBLE_WITH_ATTRS = (
-        enum.Enum,  # attrs generates __call__(**{}) but EnumType.__call__ requires a value arg.
-    )
-
     def _skip_attrs(cls) -> bool:
-        return issubclass(cls, _CLASSES_INCOMPATIBLE_WITH_ATTRS)
+        return issubclass(cls, CLASSES_INCOMPATIBLE_WITH_ATTRS)
 
     def make_cat(cls: ty.Type[C]) -> ty.Type[C]:
         if _skip_attrs(cls):

@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.2.0
+
+New features:
+
+- **Improved mypy support** — `@Cat` classes are now recognized as full attrs classes by mypy, fixing false positives with `attr.fields()`, field validators, frozen inheritance, and default ordering.
+- **`CatT` TypeVar** — new public `TypeVar` for typing generic functions that operate on `@Cat` types. Import with `from typecats import CatT`.
+
 ## v2.1.2
 
 Bug fixes:
