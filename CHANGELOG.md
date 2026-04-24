@@ -4,8 +4,8 @@
 
 New features:
 
-- **Mypy plugin delegates to attrs** — `@Cat` classes are now fully understood as attrs classes by mypy (field reordering, frozen semantics, `AttrsInstance` protocol, `__attrs_attrs__`), in addition to the existing `.struc()`, `.try_struc()`, and `.unstruc()` signatures.
-- **`CatT` TypeVar** — new public `TypeVar` bounded by `attr.AttrsInstance`, for writing generic functions over Cat types.
+- **Improved mypy support** — `@Cat` classes are now recognized as full attrs classes by mypy, fixing false positives with `attr.fields()`, field validators, frozen inheritance, and default ordering.
+- **`CatT` TypeVar** — new public `TypeVar` for typing generic functions that operate on `@Cat` types. Import with `from typecats import CatT`.
 
 ## v2.1.2
 
