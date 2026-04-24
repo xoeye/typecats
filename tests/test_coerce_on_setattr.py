@@ -145,6 +145,21 @@ class TestFrozenCatIsUnaffected:
         with pytest.raises(attr.exceptions.FrozenInstanceError):
             f.x = "world"  # type: ignore[misc]
 
+    def test_child_of_frozen_cat_can_be_defined(self):
+        @Cat(frozen=True)
+        class FrozenParent:
+            x: str
+
+        @Cat
+        class FrozenChild(FrozenParent):
+            y: int = 0
+
+        c = FrozenChild.struc({"x": "hello", "y": 1})
+        assert c.x == "hello"
+        assert c.y == 1
+        with pytest.raises(attr.exceptions.FrozenInstanceError):
+            c.y = 2  # type: ignore[misc]
+
 
 class TestCustomConverterCoercion:
     def test_cat_with_custom_converter_coerces(self):

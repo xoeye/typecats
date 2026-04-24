@@ -26,6 +26,14 @@ from .strip_defaults import ShouldStripDefaults
 from .stack_context import stack_context
 
 
+def _is_frozen(cls: type, kwargs: dict[str, ty.Any]) -> bool:
+    """Check if the resulting attrs class will be frozen."""
+    if kwargs.get("frozen", False):
+        return True
+    props = getattr(cls, "__attrs_props__", None)
+    return props is not None and props.is_frozen
+
+
 class TypeCat:
     """Base class that documents the interface added by the @Cat decorator.
 
@@ -214,7 +222,7 @@ def Cat(
             return cls
 
         user_transformer = kwargs.get("field_transformer")
-        is_frozen = kwargs.get("frozen", False)
+        is_frozen = _is_frozen(cls, kwargs)
         passthrough_kwargs = {
             k: v
             for k, v in kwargs.items()

@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.3.2
+
+Bug fixes:
+
+- Fix `ValueError: Frozen classes can't use on_setattr` when a `@Cat` inherits from a frozen parent.
+
 ## v2.3.1
 
 Bug fixes:
