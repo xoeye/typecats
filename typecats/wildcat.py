@@ -81,6 +81,10 @@ def setup_warnings_for_dangerous_dict_subclass_operations(cls):
     to a class that inherits from dict.
     """
     class_name = getattr(cls, "__name__", str(cls))
+    # Only attrs fields count as typed attributes. A plain hasattr() check would
+    # also match dict methods (items, keys, get, ...) and any other class
+    # attribute, routing those keys to setattr and losing them from the dict.
+    typed_names = frozenset(get_attrs_names(cls))
 
     def warn_key_set_on_attribute(key):
         logger.warning(
@@ -89,7 +93,7 @@ def setup_warnings_for_dangerous_dict_subclass_operations(cls):
         )
 
     def __setitem__(self, key, item):
-        if hasattr(self, key):
+        if key in typed_names:
             warn_key_set_on_attribute(key)
             setattr(self, key, item)
         else:
@@ -98,7 +102,7 @@ def setup_warnings_for_dangerous_dict_subclass_operations(cls):
     setattr(cls, "__setitem__", __setitem__)
 
     def __getitem__(self, key):
-        if hasattr(self, key):
+        if key in typed_names:
             logger.warning(
                 f"Attribute '{key}' is explicitly typed on '{class_name}' "
                 "so this should be changed to attribute access."
@@ -112,7 +116,7 @@ def setup_warnings_for_dangerous_dict_subclass_operations(cls):
         if not other_dict:
             other_dict = kwargs
         non_attribute_kvs = {
-            k: v for k, v in other_dict.items() if not hasattr(self, k)
+            k: v for k, v in other_dict.items() if k not in typed_names
         }
         for key, value in other_dict.items():
             if key not in non_attribute_kvs:

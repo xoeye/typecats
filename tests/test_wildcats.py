@@ -281,3 +281,72 @@ def test_wildcat_structure_on_parametrized_generic():
 
     str_list = struc(TList[str], dict(the_list=["a", "b", "c"]))
     assert str_list.the_list == ["a", "b", "c"]
+
+
+@Cat
+class Order(dict):
+    id: str
+    status: str = "new"
+
+    def describe(self) -> str:
+        return f"order {self.id}"
+
+
+def test_wildcat_keys_named_like_dict_methods_survive_roundtrip():
+    """Untyped keys that share a name with a dict method (or any other
+    non-field attribute) are ordinary wildcat data, not typed attributes."""
+    raw = dict(id="A1", items=[1, 2], keys="k", get=3, count=2)
+    order = Order.struc(raw)
+
+    assert order["items"] == [1, 2]
+    assert order["keys"] == "k"
+    assert order["get"] == 3
+    assert order.unstruc() == dict(raw, status="new")
+
+    # the dict API itself must keep working
+    assert callable(order.items)
+    assert dict(order.items()) == dict(items=[1, 2], keys="k", get=3, count=2)
+    assert order.get("count") == 2
+
+
+def test_wildcat_setitem_and_update_with_dict_method_names():
+    order = Order("B2")
+    order["values"] = "v"
+    order.update({"copy": True, "status": "paid"})
+    order.update(pop=1)
+
+    assert dict.get(order, "values") == "v"
+    assert dict.get(order, "copy") is True
+    assert dict.get(order, "pop") == 1
+    assert callable(order.values) and callable(order.copy) and callable(order.pop)
+    # a typed field passed through update() is still routed to the attribute
+    assert order.status == "paid"
+    assert "status" not in dict.keys(order)
+    assert order.unstruc() == dict(id="B2", status="paid", values="v", copy=True, pop=1)
+
+
+def test_wildcat_user_method_name_is_not_a_typed_attribute():
+    order = Order.struc(dict(id="C3", describe="a note"))
+    assert order["describe"] == "a note"
+    assert order.describe() == "order C3"
+    assert order.unstruc()["describe"] == "a note"
+
+
+def test_wildcat_typed_field_access_through_item_syntax_still_warns(caplog):
+    order = Order("D4")
+    with caplog.at_level("WARNING", logger="typecats.wildcat"):
+        order["status"] = "shipped"
+        assert order["status"] == "shipped"
+    assert order.status == "shipped"
+    assert "status" not in dict.keys(order)
+    assert sum("explicitly typed" in r.getMessage() for r in caplog.records) == 2
+
+
+def test_wildcat_non_string_keys():
+    order = Order("E5")
+    order[3] = "three"
+    order[(1, 2)] = "pair"
+    assert order[3] == "three"
+    assert order[(1, 2)] == "pair"
+    with pytest.raises(KeyError):
+        order[4]

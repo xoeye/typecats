@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.4.1
+
+Bug fixes:
+
+- Wildcat item access (`wc[key]`, `wc[key] = value`, `wc.update(...)`) now treats a key as a typed attribute only when it is an attrs field of the class. Previously any attribute matched, so untyped keys named like dict methods (`items`, `keys`, `get`, ...) or user-defined methods were assigned onto the instance instead of the dict, dropped from `unstruc()`, and broke the dict API (e.g. `wc.items()`). Non-string keys no longer raise `TypeError`.
+
 ## v2.4.0
 
 Replaces v2.3.x. The on_setattr coercion approach in 2.3.0–2.3.2 changed assignment behavior and introduced regressions. **Skip 2.3.x entirely.**
